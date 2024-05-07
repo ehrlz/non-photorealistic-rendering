@@ -10,10 +10,13 @@ En Windows se aconseja Visual Studio 2019/2022 y en Mac el XCode. Otros compilad
 ## Puesta en funcionamiento del proyecto
 1. Una vez descomprimido el zip y acceder mediante el terminal al directorio build.
 En entornos Linux con GCC/G++ instalado ejecutar
+
+```bash
 cmake .. -DOpenGL_GL_PREFERENCE=GLVND
 make -j4
+```
 
-2. En entornos windows con visual studio 2019/2022
+3. En entornos windows con visual studio 2019/2022
 Abrir diréctamente el fichero de solución de VS
 Darle a compilar
 
