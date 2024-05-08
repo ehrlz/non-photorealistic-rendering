@@ -7,7 +7,8 @@ ATG, 2019
 // TAMA�O y TITULO INICIAL de la VENTANA
 int ANCHO = 800, ALTO = 600;  // Tama�o inicial ventana
 const char* prac = "OpenGL (GpO)";   // Nombre de la practica (aparecera en el titulo de la ventana).
-
+GLuint posRegilla;
+vec3 regilla=vec3(16, 16, 0);
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////     CODIGO SHADERS 
@@ -19,7 +20,7 @@ const char* vertex_prog = GLSL(
 layout(location = 0) in vec3 pos; 
 layout(location = 1) in vec3 color;
 out vec3 col;
-uniform mat4 MVP=mat4(1.0f);
+uniform mat4 MVP=mat4(1.0f); 
 void main()
  {
   gl_Position = MVP*vec4(pos,1); // Construyo coord homog�neas y aplico matriz transformacion M
@@ -30,9 +31,24 @@ void main()
 const char* fragment_prog = GLSL(
 in vec3 col;
 out vec3 outputColor;
+uniform vec3 regilla=vec3(16, 16, 4);
 void main() 
  {
-	outputColor = col;
+	float luz=1;
+
+	int x = int(gl_FragCoord.x)%int(regilla.x);
+	int y = int(gl_FragCoord.y)%int(regilla.y);
+	if(x==0 || y==0){
+		discard;
+	}else{
+		x = x>regilla.x/2 ? int(regilla.x)-x : x;
+		y = y>regilla.y/2 ? int(regilla.y)-y : y;
+		if(x<regilla.z || y<regilla.z){
+			luz=min(x, y)/regilla.z;
+		}
+	}
+
+	outputColor = col*luz;
  }
 );
 
@@ -123,6 +139,7 @@ void init_scene()
 	// Alternativamente usar la funci�n Compile_Link_Shaders().
 	//	prog = Compile_Link_Shaders(vertex_prog, fragment_prog); 
 
+	posRegilla=glGetUniformLocation(prog, "regilla");
 	glUseProgram(prog);    // Indicamos que programa vamos a usar 
 }
 
@@ -153,6 +170,8 @@ void render_scene()
 	
 	M = T;
 	transfer_mat4("MVP",P*V*M);
+
+	glUniform3fv(posRegilla, 1, &regilla[0]);
 	
 	// ORDEN de dibujar
 	glBindVertexArray(triangulo.VAO);              // Activamos VAO asociado al objeto
@@ -222,10 +241,23 @@ void ResizeCallback(GLFWwindow* window, int width, int height)
 }
 
 // Callback de pulsacion de tecla
+float z=4.0f;
 static void KeyCallback(GLFWwindow* window, int key, int code, int action, int mode)
 {
 	fprintf(stdout, "Key %d Code %d Act %d Mode %d\n", key, code, action, mode);
 	if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
+
+	if(action!=GLFW_RELEASE){
+		switch(key){
+			case GLFW_KEY_UP: regilla.y+=0.1; break;
+			case GLFW_KEY_DOWN: regilla.y-=0.1; break;
+			case GLFW_KEY_LEFT: regilla.x-=0.1; break;
+			case GLFW_KEY_RIGHT: regilla.x+=0.1; break;
+			case GLFW_KEY_KP_ADD: regilla.z+=0.1; break;
+			case GLFW_KEY_KP_SUBTRACT: regilla.z-=0.1; break;
+			case GLFW_KEY_TAB: float aux=z; z=regilla.z; regilla.z=aux;
+		}
+	}
 }
 
 
