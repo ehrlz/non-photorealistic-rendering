@@ -18,18 +18,18 @@ vec3 regilla=vec3(16, 16, 0);
 
 const char* vertex_prog = GLSL(
 layout(location = 0) in vec3 pos; 
-layout(location = 1) in vec3 color;
-out vec3 col;
+layout(location = 1) in vec2 uv;
+out vec2 UV;
 uniform mat4 MVP=mat4(1.0f); 
 void main()
  {
   gl_Position = MVP*vec4(pos,1); // Construyo coord homog�neas y aplico matriz transformacion M
-  col = color;                             // Paso color a fragment shader
+  UV=uv;                             // Paso color a fragment shader
  }
 );
 
 const char* fragment_prog = GLSL(
-in vec3 col;
+in vec2 UV;
 out vec3 outputColor;
 uniform vec3 regilla=vec3(16, 16, 4);
 uniform sampler2D unit;
@@ -48,20 +48,7 @@ void main(){
 		}
 	}
 
-	int xTexturaIni=int(gl_FragCoord.x)/int(regilla.x)*int(regilla.x);
-	int yTexturaIni=int(gl_FragCoord.y)/int(regilla.y)*int(regilla.y);
-	int xTexturaFin=xTexturaIni+int(regilla.x);
-	int yTexturaFin=yTexturaIni+int(regilla.y);
-
-	vec3 color=vec3(0, 0, 0);
-	for(int i=xTexturaIni; i<xTexturaFin; i++){
-		for(int j=yTexturaIni; j<yTexturaFin; j++){
-			color+=texture(unit, vec2(i, j)).rgb;
-		}
-	}
-	color=color/(regilla.x*regilla.y);
-
-	outputColor = color*luz;
+	outputColor = texture(unit, UV).rgb*luz;
  }
 );
 
