@@ -32,9 +32,8 @@ const char* fragment_prog = GLSL(
 in vec3 col;
 out vec3 outputColor;
 uniform vec3 regilla=vec3(16, 16, 4);
-uniform vec2 textura;
-void main() 
- {
+uniform sampler2D unit;
+void main(){
 	float luz=1;
 
 	int x = int(gl_FragCoord.x)%int(regilla.x);
@@ -54,10 +53,10 @@ void main()
 	int xTexturaFin=xTexturaIni+int(regilla.x);
 	int yTexturaFin=yTexturaIni+int(regilla.y);
 
-	vec4 color=vec4(0, 0, 0, 0);
+	vec3 color=vec3(0, 0, 0);
 	for(int i=xTexturaIni; i<xTexturaFin; i++){
 		for(int j=yTexturaIni; j<yTexturaFin; j++){
-			color+=texture(textura, vec2(i, j));
+			color+=texture(unit, vec2(i, j)).rgb;
 		}
 	}
 	color=color/(regilla.x*regilla.y);
@@ -73,57 +72,23 @@ void main()
 
 GLFWwindow* window;
 GLuint prog;
-objeto triangulo;
+objeto spider;
+GLuint textura;
 
-objeto crear_triangulo(void)
+void dibujar_indexado(objeto obj)
 {
-	objeto obj;
-	GLuint VAO;
-	GLuint buffer_pos, buffer_col;
-
-	GLfloat pos_data[3][3] = { 0.0f,  0.0000f,  1.0f,  // Posici�n vertice 1
-							   0.0f, -0.8660f, -0.5f,  // Posici�n vertice 2
-							   0.0f,  0.8660f, -0.5f}; // Posici�n vertice 3
-
-	GLfloat color_data[3][3] = { 1.0f, 0.0f, 0.0f,  // Color vertice 1
-		                         0.0f, 1.0f, 0.0f,  // Color vertice 2 
-								 0.0f, 0.0f, 1.0f }; // Color vertice 3
-
-	// Mando posiciones en un VBO
-	glGenBuffers(1, &buffer_pos); glBindBuffer(GL_ARRAY_BUFFER, buffer_pos);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(pos_data), pos_data, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// Mando colores en otro VBO
-	glGenBuffers(1, &buffer_col); glBindBuffer(GL_ARRAY_BUFFER, buffer_col);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(color_data), color_data, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-
-	// Creo y enlazo el VAO
-	glGenVertexArrays(1, &VAO);	glBindVertexArray(VAO);
-
-	// Indico donde hallar datos de posiciones dentro del VBO correspondiente
-	glBindBuffer(GL_ARRAY_BUFFER, buffer_pos);
-	glEnableVertexAttribArray(0);  // Organizaci�n de los datos del atributo 0 (pos) del vertex shade
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	// Indico donde hallar datos de colores dentro del VBO correspondiente
-	glBindBuffer(GL_ARRAY_BUFFER, buffer_col);
-	glEnableVertexAttribArray(1);  // Organizaci�n de los datos del atributo 0 (pos) del vertex shade
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-	glBindVertexArray(0);  //Cerramos VAO con todo listo para ser pintado
-
-	obj.VAO = VAO; obj.Nv = 3;  // Devuelvo objeto VAO + n�mero de vertices en estructura obj
-
-	return obj;
-
+	// Activamos VAO asociado a obj y lo dibujamos con glDrawElements 
+	glBindVertexArray(obj.VAO);
+	glDrawElements(GL_TRIANGLES, obj.Ni, obj.tipo_indice, (void*)0);  // Dibujar (indexado)
+	glBindVertexArray(0);  //Desactivamos VAO activo.
 }
 
 
+vec3 pos_obs = vec3(3.0f, 3.0f, 2.0f);
+vec3 target = vec3(0.0f, 0.0f, 0.95f);
+vec3 up = vec3(0, 0, 1);
+
+mat4 PP, VV; // matrices de proyeccion y perspectiva
 // Preparaci�n de los datos de los objetos a dibujar, envialarlos a la GPU
 // Compilaci�n programas a ejecutar en la tarjeta gr�fica:  vertex shader, fragment shaders
 // Opciones generales de render de OpenGL
@@ -133,7 +98,11 @@ void init_scene()
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height); 
     
-	triangulo = crear_triangulo();  // Preparar datos de objeto, mandar a GPU
+	spider = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
+	textura = cargar_textura("../data/spider.jpg", GL_TEXTURE0);
+
+	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //40� Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
+	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up
 
 	// Mandar programas a GPU, compilar y crear programa en GPU
 
@@ -155,45 +124,32 @@ void init_scene()
 
 	posRegilla=glGetUniformLocation(prog, "regilla");
 	glUseProgram(prog);    // Indicamos que programa vamos a usar 
+
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
 }
 
-
-vec3 pos_obs=vec3(10.0f,0.0f,0.0f); //###vec3 pos_obs=vec3(1.5f,0.0f,0.0f); 
-vec3 target = vec3(0.0f,0.0f,0.0f);
-vec3 up = vec3(0,0,1);
-
-float fov = 35.0f, aspect = 4.0f / 3.0f; //###float fov = 40.0f, aspect = 4.0f / 3.0f;
+// float fov = 35.0f, aspect = 4.0f / 3.0f; //###float fov = 40.0f, aspect = 4.0f / 3.0f;
 
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
 void render_scene()
 {
-	glClearColor(0.0f,0.0f,0.0f,1.0f);  // Especifica color para el fondo (RGB+alfa)
-	glClear(GL_COLOR_BUFFER_BIT);          // Aplica color asignado borrando el buffer
+	glClearColor(0.0f,0.0f,0.0f,0.0f);  // Especifica color para el fondo (RGB+alfa)
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);          // Aplica color asignado borrando el buffer
 
 	float t = (float)glfwGetTime();  // Contador de tiempo en segundos 
 
+	///////// Aqui vendr�a nuestr c�digo para actualizar escena  /////////	
+	mat4 M, T, R, S;
+	R=rotate(t, vec3(0, 0, 1.f));  
+	T=translate(vec3(0.f, 0.f, 0.f));
+	M = T*R;
 
-	///////// Actualizacion matrices M, V, P  /////////	
-	mat4 P,V,M,T,R,S;
-
-	P = perspective(glm::radians(fov), aspect, 0.5f, 20.0f);  //40� FOV,  4:3 ,  Znear=0.5, Zfar=20
-	V = lookAt(pos_obs, target, up  );  // Pos camara, Lookat, head up
-	
-	//T = translate(0.0f, 0.0f, 3.0f*sin(t));  
-	T = glm::translate(glm::vec3(0.0, 0.0, 3.0f*sin(t))); 
-	
-	M = T;
-	transfer_mat4("MVP",P*V*M);
-
+	transfer_mat4("MVP", PP*VV*M); 
 	glUniform3fv(posRegilla, 1, &regilla[0]);
 	
 	// ORDEN de dibujar
-	glBindVertexArray(triangulo.VAO);              // Activamos VAO asociado al objeto
-    glDrawArrays(GL_TRIANGLES, 0, triangulo.Nv);   // Orden de dibujar (Nv vertices)	
-	glBindVertexArray(0);                          // Desconectamos VAO
-
-	////////////////////////////////////////////////////////
-
+	dibujar_indexado(spider);
 }
 
 
