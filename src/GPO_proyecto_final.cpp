@@ -32,6 +32,7 @@ const char* fragment_prog = GLSL(
 in vec3 col;
 out vec3 outputColor;
 uniform vec3 regilla=vec3(16, 16, 4);
+uniform vec2 textura;
 void main() 
  {
 	float luz=1;
@@ -48,7 +49,20 @@ void main()
 		}
 	}
 
-	outputColor = col*luz;
+	int xTexturaIni=int(gl_FragCoord.x)/int(regilla.x)*int(regilla.x);
+	int yTexturaIni=int(gl_FragCoord.y)/int(regilla.y)*int(regilla.y);
+	int xTexturaFin=xTexturaIni+int(regilla.x);
+	int yTexturaFin=yTexturaIni+int(regilla.y);
+
+	vec4 color=vec4(0, 0, 0, 0);
+	for(int i=xTexturaIni; i<xTexturaFin; i++){
+		for(int j=yTexturaIni; j<yTexturaFin; j++){
+			color+=texture(textura, vec2(i, j));
+		}
+	}
+	color=color/(regilla.x*regilla.y);
+
+	outputColor = color*luz;
  }
 );
 
