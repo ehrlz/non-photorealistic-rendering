@@ -3,16 +3,10 @@ ATG, 2019
 ******************************************************************************/
 
 #include <GpO.h>
-#include <vector>
-
-using namespace std;
 
 // TAMA�O y TITULO INICIAL de la VENTANA
 int ANCHO = 800, ALTO = 600;  // Tama�o inicial ventana
 const char* prac = "OpenGL (GpO)";   // Nombre de la practica (aparecera en el titulo de la ventana).
-
-GLuint prog[2];
-
 GLuint posRegilla;
 vec3 regilla=vec3(16, 16, 0);
 
@@ -31,15 +25,6 @@ void main()
  {
   gl_Position = MVP*vec4(pos,1); // Construyo coord homog�neas y aplico matriz transformacion M
   col = color;                             // Paso color a fragment shader
- }
-);
-
-const char* fragment_prog_base = GLSL(
-in vec3 col;
-out vec3 outputColor;
-void main() 
- {
-	outputColor = col;
  }
 );
 
@@ -73,6 +58,7 @@ void main()
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GLFWwindow* window;
+GLuint prog;
 objeto triangulo;
 
 objeto crear_triangulo(void)
@@ -138,11 +124,23 @@ void init_scene()
 	// Mandar programas a GPU, compilar y crear programa en GPU
 
 	// Compilear Shaders
-	prog[0] = Compile_Link_Shaders(vertex_prog, fragment_prog_base); // Programa base
-	prog[1] = Compile_Link_Shaders(vertex_prog, fragment_prog); // Programa con regilla
+	GLuint VertexShaderID = compilar_shader(vertex_prog, GL_VERTEX_SHADER);
+	GLuint FragmentShaderID = compilar_shader(fragment_prog, GL_FRAGMENT_SHADER);
 
-	posRegilla=glGetUniformLocation(prog[1], "regilla");
-	glUseProgram(prog[0]); 
+	// Enlazar sharders en el programa final
+	prog = glCreateProgram();
+	glAttachShader(prog, VertexShaderID);  glAttachShader(prog, FragmentShaderID);
+	glLinkProgram(prog); check_errores_programa(prog);
+
+	// Limpieza final de los shaders una vez compilado el programa
+	glDetachShader(prog, VertexShaderID);  glDeleteShader(VertexShaderID);
+	glDetachShader(prog, FragmentShaderID);  glDeleteShader(FragmentShaderID);
+
+	// Alternativamente usar la funci�n Compile_Link_Shaders().
+	//	prog = Compile_Link_Shaders(vertex_prog, fragment_prog); 
+
+	posRegilla=glGetUniformLocation(prog, "regilla");
+	glUseProgram(prog);    // Indicamos que programa vamos a usar 
 }
 
 
@@ -153,7 +151,7 @@ vec3 up = vec3(0,0,1);
 float fov = 35.0f, aspect = 4.0f / 3.0f; //###float fov = 40.0f, aspect = 4.0f / 3.0f;
 
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
-void render_scene_base()
+void render_scene()
 {
 	glClearColor(0.0f,0.0f,0.0f,1.0f);  // Especifica color para el fondo (RGB+alfa)
 	glClear(GL_COLOR_BUFFER_BIT);          // Aplica color asignado borrando el buffer
@@ -184,28 +182,6 @@ void render_scene_base()
 
 }
 
-void render_scene(){
-	//Recoger colores del buffer que se ha pintado
-	vector<vector<vec4>> preRender(ALTO, vector<vec4>(ANCHO));
-	
-	for(int i=0; i<ALTO; i++){
-		for(int j=0; j<ANCHO; j++){
-			glReadPixels(j, i, 1, 1, GL_RGB, GL_FLOAT, &preRender[i][j]);
-			printf("Color: %f %f %f\n", preRender[i][j].r, preRender[i][j].g, preRender[i][j].b);
-		}
-	}
-
-	//Crear textura con los colores recogidos
-
-	//Dividir la textura en regilla
-
-	//Calcular el color medio de cada cuadrado de la regilla
-
-	//Pintar la regilla con los colores medios
-
-	//Liberar memoria
-	vector<vector<vec4>>().swap(preRender);
-}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// PROGRAMA PRINCIPAL
@@ -220,9 +196,8 @@ int main(int argc, char* argv[])
 	glfwSwapInterval(1);
 	while (!glfwWindowShouldClose(window))
 	{
-		render_scene_base();
-		glfwSwapBuffers(window);
 		render_scene();
+		glfwSwapBuffers(window);
 		glfwPollEvents();
 		show_info();
 	}
