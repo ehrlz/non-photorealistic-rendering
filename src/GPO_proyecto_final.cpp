@@ -33,6 +33,7 @@ in vec2 UV;
 out vec3 outputColor;
 uniform vec3 regilla=vec3(16, 16, 4);
 uniform sampler2D unit;
+uniform vec2 resolucion=vec2(800, 600);
 void main(){
 	float luz=1;
 
@@ -48,7 +49,12 @@ void main(){
 		}
 	}
 
-	outputColor = texture(unit, UV).rgb*luz;
+	vec2 Pixels=resolucion/vec2(regilla.x, regilla.y);
+	float dx = regilla.x * (1.0 / Pixels.x);
+	float dy = regilla.y * (1.0 / Pixels.y);
+	vec2 Coord = vec2(dx * floor(UV.x / dx),
+						dy * floor(UV.y / dy));
+	outputColor = texture(unit, Coord).rgb*luz;
  }
 );
 
