@@ -28,7 +28,7 @@ void main()
  }
 );
 
-const char* fragment_prog = GLSL(
+const char* fragment_prog_pix_it1 = GLSL(
 in vec2 UV;
 out vec3 outputColor;
 uniform vec3 regilla=vec3(16, 16, 4);
@@ -58,13 +58,28 @@ void main(){
  }
 );
 
+const char* fragment_prog_pix_it2 = GLSL(
+in vec2 UV;
+out vec3 outputColor;
+uniform vec3 regilla=vec3(16, 16, 4);
+uniform sampler2D unit;
+uniform vec2 resolucion=vec2(800, 600);
+void main(){
+    vec2 p = UV * resolucion;
+
+    p.x -= mod(p.x, regilla.x);
+    p.y -= mod(p.y, regilla.y);
+    
+    outputColor = texture(unit, p / resolucion).rgb;
+}
+);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////   RENDER CODE AND DATA
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GLFWwindow* window;
-GLuint prog;
+GLuint prog[2];
 objeto spider;
 GLuint textura;
 
@@ -100,23 +115,16 @@ void init_scene()
 	// Mandar programas a GPU, compilar y crear programa en GPU
 
 	// Compilear Shaders
-	GLuint VertexShaderID = compilar_shader(vertex_prog, GL_VERTEX_SHADER);
-	GLuint FragmentShaderID = compilar_shader(fragment_prog, GL_FRAGMENT_SHADER);
+	prog[0] = Compile_Link_Shaders(vertex_prog, fragment_prog_pix_it1); // Mandar programas a GPU, compilar y crear programa en GPU
+	prog[1] = Compile_Link_Shaders(vertex_prog, fragment_prog_pix_it2); // Mandar programas a GPU, compilar y crear programa en GPU
+    
+    glEnable(GL_CULL_FACE); 
+    glEnable(GL_DEPTH_TEST); 
 
-	// Enlazar sharders en el programa final
-	prog = glCreateProgram();
-	glAttachShader(prog, VertexShaderID);  glAttachShader(prog, FragmentShaderID);
-	glLinkProgram(prog); check_errores_programa(prog);
+    glUseProgram(prog[0]);    // Indicamos que programa vamos a usar
 
-	// Limpieza final de los shaders una vez compilado el programa
-	glDetachShader(prog, VertexShaderID);  glDeleteShader(VertexShaderID);
-	glDetachShader(prog, FragmentShaderID);  glDeleteShader(FragmentShaderID);
-
-	// Alternativamente usar la funci�n Compile_Link_Shaders().
-	//	prog = Compile_Link_Shaders(vertex_prog, fragment_prog); 
-
-	posRegilla=glGetUniformLocation(prog, "regilla");
-	glUseProgram(prog);    // Indicamos que programa vamos a usar 
+	posRegilla=glGetUniformLocation(prog[0], "regilla");
+	glUseProgram(prog[0]);    // Indicamos que programa vamos a usar 
 
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
@@ -218,7 +226,15 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_RIGHT: regilla.x+=0.1; break;
 			case GLFW_KEY_KP_ADD: regilla.z+=0.1; break;
 			case GLFW_KEY_KP_SUBTRACT: regilla.z-=0.1; break;
-			case GLFW_KEY_TAB: float aux=z; z=regilla.z; regilla.z=aux;
+			case GLFW_KEY_0: 
+				glUseProgram(prog[0]); 
+				posRegilla=glGetUniformLocation(prog[0], "regilla");
+				break;
+			case GLFW_KEY_1: 
+				glUseProgram(prog[1]); 
+				posRegilla=glGetUniformLocation(prog[1], "regilla");
+				break;
+			case GLFW_KEY_TAB: float aux=z; z=regilla.z; regilla.z=aux; break;
 		}
 	}
 }
