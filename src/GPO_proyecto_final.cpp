@@ -7,8 +7,8 @@ ATG, 2019
 // TAMA�O y TITULO INICIAL de la VENTANA
 int ANCHO = 800, ALTO = 600;  // Tama�o inicial ventana
 const char* prac = "Proyecto NPR";   // Nombre de la practica (aparecera en el titulo de la ventana).
-GLuint posRegilla;
-vec3 regilla=vec3(16, 16, 0);
+GLuint posRejilla;
+vec3 rejilla=vec3(16, 16, 0);
 
 // SHADERS EN FICHEROS
 
@@ -82,7 +82,7 @@ void init_scene()
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/toon.fs");
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 	
-	posRegilla=glGetUniformLocation(prog[0], "regilla");
+	posRejilla=glGetUniformLocation(prog[0], "rejilla");
 	change_scene(PIXEL1);	// Indicamos que programa vamos a usar 
 
 	glEnable(GL_CULL_FACE);
@@ -117,8 +117,9 @@ void render_scene()
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
 		transfer_mat4("MVP", PP*VV*M); 
+		transfer_vec3("rejilla", rejilla);
+		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
 	}
-	glUniform3fv(posRegilla, 1, &regilla[0]);
 	
 	//L = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
 	//transfer_vec3("luz", L);
@@ -191,7 +192,7 @@ void ResizeCallback(GLFWwindow* window, int width, int height)
 }
 
 // Callback de pulsacion de tecla
-float z=4.0f;
+float z=4.0f; // Ancho sombreado permite intercambio de tamaño de sombras
 static float LIGHT_MOVE_SCALE = 0.1;
 
 static void KeyCallback(GLFWwindow* window, int key, int code, int action, int mode)
@@ -201,36 +202,34 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 
 	if(action!=GLFW_RELEASE){
 		switch(key){
-			case GLFW_KEY_UP: regilla.y+=0.1; break;
-			case GLFW_KEY_DOWN: regilla.y-=0.1; break;
+			case GLFW_KEY_UP: rejilla.y+=0.1; break; // Aumento de longitud pixeles en y
+			case GLFW_KEY_DOWN: rejilla.y-=0.1; break; // Disminucion de longitud pixeles en y
 			case GLFW_KEY_LEFT: 
 				if(scene_flag == TOON){
 					az -= LIGHT_MOVE_SCALE;
-				}else{
-					regilla.x-=0.1;
+				}else{ // Disminucion de longitud pixeles en x
+					rejilla.x-=0.1;
 				}
 				break;
 			case GLFW_KEY_RIGHT:
 				if(scene_flag == TOON){
 					az += LIGHT_MOVE_SCALE;
-				}else{
-					regilla.x+=0.1;
+				}else{ // Aumento de longitud pixeles en x
+					rejilla.x+=0.1;
 				}
 				break;
-			case GLFW_KEY_KP_ADD: regilla.z+=0.1; break;
-			case GLFW_KEY_KP_SUBTRACT: regilla.z-=0.1; break;
-			case GLFW_KEY_0: 
-				change_scene(PIXEL1);
-				posRegilla=glGetUniformLocation(prog[0], "regilla");
-				break;
-			case GLFW_KEY_1: 
-				change_scene(PIXEL2);
-				posRegilla=glGetUniformLocation(prog[1], "regilla");
-				break;
-			case GLFW_KEY_2: 
-				change_scene(TOON);
-				break;
-			case GLFW_KEY_TAB: float aux=z; z=regilla.z; regilla.z=aux; break;
+
+			// Cambio de tamaño del sombreado
+			case GLFW_KEY_KP_ADD: rejilla.z+=0.1; break;
+			case GLFW_KEY_KP_SUBTRACT: rejilla.z-=0.1; break;
+
+			// Cambio de shader
+			case GLFW_KEY_0: change_scene(PIXEL1); break;
+			case GLFW_KEY_1: change_scene(PIXEL2); break;
+			case GLFW_KEY_2: change_scene(TOON); break;
+			
+			//Intercambio de sombreado
+			case GLFW_KEY_TAB: float aux=z; z=rejilla.z; rejilla.z=aux; break;
 		}
 	}
 }

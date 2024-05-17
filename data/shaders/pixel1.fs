@@ -1,28 +1,36 @@
 #version 330 core
 in vec2 UV;
 out vec3 outputColor;
-uniform vec3 regilla=vec3(16, 16, 4);
+// Estructura de la rejilla: 
+//		x: Tamaño del pixel en horizontal
+//		y: Tamaño del pixel en vertical
+//		z: Tamaño del sombreado en pixeles
+uniform vec3 rejilla=vec3(16, 16, 4);
 uniform sampler2D unit;
 uniform vec2 resolucion=vec2(800, 600);
 void main(){
-	float luz=1;
+	float luz=1; // Sombreado de casillas
 
-	int x = int(gl_FragCoord.x)%int(regilla.x);
-	int y = int(gl_FragCoord.y)%int(regilla.y);
+	// Se busca el limite de los pixeles para descartarlos
+	int x = int(gl_FragCoord.x)%int(rejilla.x);
+	int y = int(gl_FragCoord.y)%int(rejilla.y);
 	if(x==0 || y==0){
 		discard;
-	}else{
-		x = x>regilla.x/2 ? int(regilla.x)-x : x;
-		y = y>regilla.y/2 ? int(regilla.y)-y : y;
-		if(x<regilla.z || y<regilla.z){
-			luz=min(x, y)/regilla.z;
+	}else{ // Si esta cerca de los bordes se sombrea 
+		x = x>rejilla.x/2 ? int(rejilla.x)-x : x;
+		y = y>rejilla.y/2 ? int(rejilla.y)-y : y;
+		if(x<rejilla.z || y<rejilla.z){ // La luz se calcula dependiendo del borde más cercano
+			luz=min(x, y)/rejilla.z;
 		}
 	}
 
-	vec2 Pixels=resolucion/vec2(regilla.x, regilla.y);
-	float dx = regilla.x * (1.0 / Pixels.x);
-	float dy = regilla.y * (1.0 / Pixels.y);
+	// Color de la zona
+	// Se divide la pantalla en pixeles
+	vec2 Pixels=resolucion/vec2(rejilla.x, rejilla.y);
+	// Se coge el color de una de las esquinas del pixel
+	float dx = rejilla.x * (1.0 / Pixels.x);
+	float dy = rejilla.y * (1.0 / Pixels.y);
 	vec2 Coord = vec2(dx * floor(UV.x / dx),
 						dy * floor(UV.y / dy));
 	outputColor = texture(unit, Coord).rgb*luz;
- }
+}
