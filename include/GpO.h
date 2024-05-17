@@ -57,6 +57,7 @@ char* leer_codigo_de_fichero(const char*);
 GLuint cargar_cube_map(const char *, GLuint);
 GLuint cargar_textura(const char *,GLuint);
 objeto cargar_modelo(char*);
+objeto cargar_modelo_obj(const char*);
 
 void transfer_mat4(const char*, mat4);
 void transfer_mat3(const char*, mat3);

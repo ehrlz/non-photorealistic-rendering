@@ -20,6 +20,7 @@ set( GPO_DESCRIPTION "GpO Base Project" )
 set( GPO_LICENSE LGPL )
 
 find_package(OpenGL REQUIRED)
+find_package(assimp REQUIRED)  # Libreria modelos
 
 add_subdirectory(libs/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(libs/glm )
@@ -31,14 +32,14 @@ include_directories(libs/glm)
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/include/KHR)
 include_directories(${PROJECT_SOURCE_DIR}/include/stb)
-
+include_directories(${ASSIMP_INCLUDE_DIRS})
 
 set(GPO_SOURCE_FILES include/stb/stb_image.h
 					 include/GpO.h
 					 src/GPO_proyecto_final.cpp
 					 src/GPO_aux.cpp)
 add_executable(gpo_proyecto_final ${GPO_SOURCE_FILES})
-target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface)
+target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface assimp)
 
 set_target_properties(gpo_proyecto_final
   PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
