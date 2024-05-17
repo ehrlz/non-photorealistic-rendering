@@ -5,7 +5,14 @@ Debe estar instalado en el sistema:
 2. Un entornos de programación para lenguaje C/C++. En linux con tener el GCC y G++ podría ser suficiente. 
 Se pueden utilizar entornos como VScode o CLion. 
 En Windows se aconseja Visual Studio 2019/2022 y en Mac el XCode. Otros compiladores como el MinGW tamibén podrian funcionar.
-3. CMake instalado y accesible desde el terminal o consola de comandos.
+3. CMake instalado y accesible desde el terminal o consola de comandos (v 3.20 o más):
+
+### Instalación en Ubuntu
+```bash
+sudo snap install cmake --classic
+```
+
+> `apt-get` proporciona una versión no compatible con la librería assimp.
 
 ## Puesta en funcionamiento del proyecto
 1. Una vez descomprimido el zip y acceder mediante el terminal al directorio build.
