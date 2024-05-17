@@ -21,16 +21,20 @@ GLuint prog[3];
 
 objeto spider;
 GLuint textura_spider;
-
 objeto buda;
+objeto helmet;
+GLuint textura_helmet;
 
 char* vertex_prog;
 char* fragment_prog;
 
 int scene_flag = 0;
+int model_flag = 0;
 void change_scene(int option);
+void change_model(int option);
 
 enum SCENES {PIXEL1, PIXEL2, TOON};
+enum MODELS {SPIDER, BUDA, HELMET};
 
 void dibujar_indexado(objeto obj)
 {
@@ -62,7 +66,12 @@ void init_scene()
     
 	spider = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
 	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE0);
+
 	buda = cargar_modelo("../data/buda_n.bix");
+
+	helmet = cargar_modelo_obj("../data/helmet.obj");
+	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE1);
+
 
 	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //40� Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
 	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up
@@ -102,23 +111,38 @@ void render_scene()
 	///////// Aqui vendr�a nuestr c�digo para actualizar escena  /////////	
 	mat4 M, T, R, S;
 
-	if(scene_flag == TOON){
-		mat4 R1 = rotate(radians(90.0f), vec3(1.f, 0.f, 0.f));
-		mat4 R2 = rotate(t, vec3(0.f, 1.f, 0.f));
-		T=translate(vec3(0.f, 0.f, 0.f));
-		M = T*R1*R2;
-		transfer_mat4("PV",PP*VV);
-		transfer_mat4("M", M);
-
-		L = vec3(cos(az) * cos(el), sin(az), cos(az) * sin(el)); // al estar el buda "tumbado", az y el están invertidos
-		transfer_vec3("luz", L);
-	}else{
+	if(scene_flag == PIXEL1 || scene_flag == PIXEL2){
 		R=rotate(t, vec3(0, 0, 1.f));  
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
-		transfer_mat4("MVP", PP*VV*M); 
+
+		transfer_mat4("MVP", PP*VV*M);
 		transfer_vec3("rejilla", rejilla);
 		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
+	}
+	else if(scene_flag == TOON){
+		if(model_flag == BUDA){
+			mat4 R1 = rotate(radians(90.0f), vec3(1.f, 0.f, 0.f));
+			mat4 R2 = rotate(t, vec3(0.f, 1.f, 0.f));
+			T=translate(vec3(0.f, 0.f, 0.f));
+			M = T*R1*R2;
+
+			L = vec3(cos(az) * cos(el), sin(az), cos(az) * sin(el)); // al estar el buda "tumbado", az y el están invertidos
+		}else if (model_flag == HELMET){
+			T=translate(vec3(0.f, 0.f, 0.f));
+			R=rotate(t, vec3(0.f, 0.f, 1.f));
+			S=scale(vec3(0.1f,0.1f,0.1f));
+			M = T * R * S;
+
+			L = vec3(cos(az) * cos(el), sin(az), cos(az) * sin(el));
+		}
+
+		transfer_mat4("PV",PP*VV);
+		transfer_mat4("M", M);
+		transfer_vec3("luz", L);
+	}else{
+		fprintf(stderr, "[ERROR]: Bad scene def.");
+		
 	}
 	
 	//L = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
@@ -126,11 +150,18 @@ void render_scene()
 
 	// ORDEN de dibujar
 
-	if(scene_flag == TOON){
-		dibujar_indexado(buda);
-	}else{
+	switch (model_flag)
+	{
+		case SPIDER:
 		dibujar_indexado(spider);
-	}	
+		break;
+		case BUDA:
+		dibujar_indexado(buda);
+		break;
+		case HELMET:
+		dibujar_indexado(helmet);
+		break;
+	}
 }
 
 
@@ -197,7 +228,7 @@ static float LIGHT_MOVE_SCALE = 0.1;
 
 static void KeyCallback(GLFWwindow* window, int key, int code, int action, int mode)
 {
-	fprintf(stdout, "Key %d Code %d Act %d Mode %d\n", key, code, action, mode);
+	//fprintf(stdout, "Key %d Code %d Act %d Mode %d\n", key, code, action, mode);
 	if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, true);
 
 	if(action!=GLFW_RELEASE){
@@ -229,31 +260,78 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_2: change_scene(TOON); break;
 			
 			//Intercambio de sombreado
-			case GLFW_KEY_TAB: float aux=z; z=rejilla.z; rejilla.z=aux; break;
+			case GLFW_KEY_TAB:
+				{
+					float aux=z; z=rejilla.z; rejilla.z=aux; // in a block to avoid cross initialization
+				}
+				break;
+			case GLFW_KEY_PERIOD:
+				change_model((model_flag+1) % 3);
+				break;
+			case GLFW_KEY_COMMA:
+				change_model((model_flag-1) % 3);
+				break;
 		}
 	}
 }
 
 void change_scene(int option){
-	if(option < 0 && option > 2) // UPDATE IF A NEW SHADER IS IMPLEMENTED
+	if(option < 0 || option > 2){ // UPDATE IF A NEW SHADER IS IMPLEMENTED
+		fprintf(stderr,"Scene not available\n");
 		return;
+	} 
+	scene_flag = option;
 	
 	switch (option)
 	{
 	case 0:
 		printf("Pixel shading 1\n");
+		change_model(SPIDER);
 		break;
 	case 1:
 		printf("Pixel shading 2\n");
+		change_model(SPIDER);
 		break;
 	case 2:
 		printf("Toon shading\n");
+		change_model(BUDA);
 		break;
 	}
-	scene_flag = option;
 	glUseProgram(prog[option]);
+}
 
-
+// SPIDER -> PIXEL, BUDA & HELMET -> TOON
+void change_model(int option){
+	if(option < 0 || option > 2){ // UPDATE IF A NEW MODEL IS IMPLEMENTED
+		fprintf(stderr,"Model not available\n");
+		return;
+	}
+	
+	switch (option)
+	{
+	case 0:
+		if(scene_flag == TOON){
+			fprintf(stderr, "[ERROR] Modelo spiderman solo para modo pixel\n");
+			return;
+		}
+		printf("SPIDER\n");
+		break;
+	case 1:
+		if(scene_flag != TOON){
+			fprintf(stderr, "[ERROR] Modelo buda solo para modo toon\n");
+			return;
+		}
+		printf("BUDA\n");
+		break;
+	case 2:
+		if(scene_flag != TOON){
+			fprintf(stderr, "[ERROR] Modelo spiderman solo para modo toon\n");
+			return;
+		}
+		printf("HELMET\n");
+		break;
+	}
+	model_flag = option;
 }
 
 
