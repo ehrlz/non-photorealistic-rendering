@@ -36,7 +36,7 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
-enum SCENES {PIXEL1, PIXEL2, TOON};
+enum SCENES {PIXEL1, PIXEL2, TOON, PHONG};
 enum MODELS {SPIDER, BUDA, HELMET, CAT};
 
 void dibujar_indexado(objeto obj)
@@ -94,6 +94,10 @@ void init_scene()
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/toon.fs");
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 	
+	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs");
+	fragment_prog = leer_codigo_de_fichero("../data/shaders/phong.fs");
+	prog[3] = Compile_Link_Shaders(vertex_prog, fragment_prog);
+
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
 	change_scene(PIXEL1);	// Indicamos que programa vamos a usar 
 
@@ -111,7 +115,7 @@ void render_scene()
 
 	float t = (float)glfwGetTime();  // Contador de tiempo en segundos 
 
-	///////// Aqui vendr�a nuestr c�digo para actualizar escena  /////////	
+	///////// Aqui vendría nuestr código para actualizar escena  /////////	
 	mat4 M, T, R, S;
 
 	if(scene_flag == PIXEL1 || scene_flag == PIXEL2){
@@ -123,7 +127,7 @@ void render_scene()
 		transfer_vec3("rejilla", rejilla);
 		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
 	}
-	else if(scene_flag == TOON){
+	else if(scene_flag == TOON || scene_flag == PHONG){
 		if(model_flag == BUDA){
 			mat4 R1 = rotate(radians(90.0f), vec3(1.f, 0.f, 0.f));
 			mat4 R2 = rotate(t, vec3(0.f, 1.f, 0.f));
@@ -151,8 +155,7 @@ void render_scene()
 		transfer_mat4("M", M);
 		transfer_vec3("luz", L);
 	}else{
-		fprintf(stderr, "[ERROR]: Bad scene def.");
-		
+		fprintf(stderr, "[ERROR]: Bad scene def.\n");
 	}
 	
 	//L = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
@@ -271,6 +274,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_0: change_scene(PIXEL1); break;
 			case GLFW_KEY_1: change_scene(PIXEL2); break;
 			case GLFW_KEY_2: change_scene(TOON); break;
+			case GLFW_KEY_3: change_scene(PHONG); break;
 			
 			//Intercambio de sombreado
 			case GLFW_KEY_TAB:
@@ -289,7 +293,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 }
 
 void change_scene(int option){
-	if(option < 0 || option > 2){ // UPDATE IF A NEW SHADER IS IMPLEMENTED
+	if(option < 0 || option > 3){ // UPDATE IF A NEW SHADER IS IMPLEMENTED
 		fprintf(stderr,"Scene not available\n");
 		return;
 	} 
@@ -307,6 +311,10 @@ void change_scene(int option){
 		break;
 	case 2:
 		printf("Toon shading\n");
+		change_model(BUDA);
+		break;
+	case 3:
+		printf("Phong shading\n");
 		change_model(BUDA);
 		break;
 	}
