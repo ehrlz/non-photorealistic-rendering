@@ -186,7 +186,7 @@ GLuint Compile_Link_Shaders(const char* vertexShader_source,const char*fragmentS
 
 GLuint cargar_textura(const char * imagepath, GLuint tex_unit)
 {
-  stbi_set_flip_vertically_on_load(true);
+  stbi_set_flip_vertically_on_load(false);
 
   int width, height,nrChannels;
   unsigned char* data = stbi_load(imagepath, &width, &height,&nrChannels,0);
@@ -449,6 +449,12 @@ objeto cargar_modelo_obj(const char* fichero) {
     N_caras = mesh->mNumFaces;
     N_indices = N_caras * 3;
 
+	printf("Leyendo modelo de %s: \n",fichero);
+	printf("%d vertices, %d triangulos. Lista de %d indices\n",N_vertices,N_caras,N_indices);
+	// printf("%d vertices, %d triangulos\n",N_vertices,N_caras);
+	//printf("Indices guardados en enteros de %d bytes\n",s_index);
+	//printf("%d datos por vertice\n",datos_per_vertex);
+
     GLuint tipo = GL_UNSIGNED_INT;
     unsigned char s_index = 4;
     if (N_vertices <= 65536) {
@@ -472,7 +478,11 @@ objeto cargar_modelo_obj(const char* fichero) {
             vertices.push_back(mesh->mNormals[i].x);
             vertices.push_back(mesh->mNormals[i].y);
             vertices.push_back(mesh->mNormals[i].z);
-        }
+        } else{
+			vertices.push_back(0.0f);
+            vertices.push_back(0.0f);
+            vertices.push_back(0.0f);
+		}
 
         if (mesh->mTextureCoords[0]) {
             vertices.push_back(mesh->mTextureCoords[0][i].x);
@@ -502,10 +512,10 @@ objeto cargar_modelo_obj(const char* fichero) {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 
     glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
     glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);  // Asignados atributos, podemos desconectar BUFFER
 

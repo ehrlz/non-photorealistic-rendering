@@ -1,11 +1,11 @@
-/************************  GPO_01 ************************************
-ATG, 2019
+/************************  NPR_RENDERING ************************************
+Alonso García Elías Herrero, 2024
 ******************************************************************************/
 
 #include <GpO.h>
 
-// TAMA�O y TITULO INICIAL de la VENTANA
-int ANCHO = 800, ALTO = 600;  // Tama�o inicial ventana
+// TAMAÑO y TITULO INICIAL de la VENTANA
+int ANCHO = 800, ALTO = 600;  // Tamaño inicial ventana
 const char* prac = "Proyecto NPR";   // Nombre de la practica (aparecera en el titulo de la ventana).
 GLuint posRejilla;
 vec3 rejilla=vec3(16, 16, 0);
@@ -24,6 +24,9 @@ GLuint textura_spider;
 objeto buda;
 objeto helmet;
 GLuint textura_helmet;
+objeto cat;
+GLuint textura_cat;
+
 
 char* vertex_prog;
 char* fragment_prog;
@@ -34,7 +37,7 @@ void change_scene(int option);
 void change_model(int option);
 
 enum SCENES {PIXEL1, PIXEL2, TOON};
-enum MODELS {SPIDER, BUDA, HELMET};
+enum MODELS {SPIDER, BUDA, HELMET, CAT};
 
 void dibujar_indexado(objeto obj)
 {
@@ -55,8 +58,8 @@ mat4 PP, VV; // matrices de proyeccion y perspectiva
 float az = 0.f, el = .75f; // Azimut, elevación
 vec3 L; // Vector de iluminación
 
-// Preparaci�n de los datos de los objetos a dibujar, envialarlos a la GPU
-// Compilaci�n programas a ejecutar en la tarjeta gr�fica:  vertex shader, fragment shaders
+// Preparación de los datos de los objetos a dibujar, envialarlos a la GPU
+// Compilación programas a ejecutar en la tarjeta gráfica:  vertex shader, fragment shaders
 // Opciones generales de render de OpenGL
 void init_scene()
 {
@@ -72,11 +75,11 @@ void init_scene()
 	helmet = cargar_modelo_obj("../data/helmet.obj");
 	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE1);
 
+	cat = cargar_modelo_obj("../data/cat.obj");
+	textura_cat = cargar_textura("../data/cat.jpg", GL_TEXTURE2);
 
-	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //40� Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
+	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //25º Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
 	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up
-
-	// Mandar programas a GPU, compilar y crear programa en GPU
 
 	// Compilado de Shaders
 	// Mandar programas a GPU, compilar y crear programa en GPU
@@ -103,7 +106,7 @@ void init_scene()
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
 void render_scene()
 {
-	glClearColor(0.0f,0.0f,0.0f,0.0f);  // Especifica color para el fondo (RGB+alfa)
+	glClearColor(0.1f,0.1f,0.1f,0.0f);  // Especifica color para el fondo (RGB+alfa)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);          // Aplica color asignado borrando el buffer
 
 	float t = (float)glfwGetTime();  // Contador de tiempo en segundos 
@@ -135,6 +138,13 @@ void render_scene()
 			M = T * R * S;
 
 			L = vec3(cos(az) * cos(el), sin(az), cos(az) * sin(el));
+		}else if (model_flag == CAT){
+			T=translate(vec3(0.f, 0.f, 0.f));
+			R=rotate(t, vec3(0.f, 0.f, 1.f));
+			S=scale(vec3(0.05f,0.05f,0.05f));
+			M = T * R * S;
+
+			L = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
 		}
 
 		transfer_mat4("PV",PP*VV);
@@ -160,6 +170,9 @@ void render_scene()
 		break;
 		case HELMET:
 		dibujar_indexado(helmet);
+		break;
+		case CAT:
+		dibujar_indexado(cat);
 		break;
 	}
 }
@@ -266,10 +279,10 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 				}
 				break;
 			case GLFW_KEY_PERIOD:
-				change_model((model_flag+1) % 3);
+				change_model((model_flag+1) % 4);
 				break;
 			case GLFW_KEY_COMMA:
-				change_model((model_flag-1) % 3);
+				change_model((model_flag-1) % 4);
 				break;
 		}
 	}
@@ -302,7 +315,7 @@ void change_scene(int option){
 
 // SPIDER -> PIXEL, BUDA & HELMET -> TOON
 void change_model(int option){
-	if(option < 0 || option > 2){ // UPDATE IF A NEW MODEL IS IMPLEMENTED
+	if(option < 0 || option > 3){ // UPDATE IF A NEW MODEL IS IMPLEMENTED
 		fprintf(stderr,"Model not available\n");
 		return;
 	}
@@ -325,10 +338,19 @@ void change_model(int option){
 		break;
 	case 2:
 		if(scene_flag != TOON){
-			fprintf(stderr, "[ERROR] Modelo spiderman solo para modo toon\n");
+			fprintf(stderr, "[ERROR] Modelo helmet solo para modo toon\n");
 			return;
 		}
+		transfer_int("unit",1);
 		printf("HELMET\n");
+		break;
+	case 3:
+		if(scene_flag != TOON){
+			fprintf(stderr, "[ERROR] Modelo cat solo para modo toon\n");
+			return;
+		}
+		transfer_int("unit",2);
+		printf("CAT\n");
 		break;
 	}
 	model_flag = option;
