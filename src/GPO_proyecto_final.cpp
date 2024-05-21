@@ -19,6 +19,8 @@ vec3 rejilla=vec3(16, 16, 0);
 GLFWwindow* window;
 GLuint prog[3];
 
+GLuint renderBuffer;
+
 objeto spider;
 GLuint textura_spider;
 objeto buda;
@@ -33,7 +35,8 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
-enum SCENES {PIXEL1, PIXEL2, TOON};
+bool pixelArtActive=false;
+enum SCENES {BASE, PIXEL, TOON};
 enum MODELS {SPIDER, BUDA, HELMET};
 
 void dibujar_indexado(objeto obj)
@@ -81,7 +84,7 @@ void init_scene()
 	// Compilado de Shaders
 	// Mandar programas a GPU, compilar y crear programa en GPU
 	vertex_prog = leer_codigo_de_fichero("../data/shaders/pixel.vs");
-	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel1.fs");
+	fragment_prog = leer_codigo_de_fichero("../data/shaders/base.fs");
 	prog[0] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel2.fs");
@@ -92,7 +95,9 @@ void init_scene()
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 	
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
-	change_scene(PIXEL1);	// Indicamos que programa vamos a usar 
+	change_scene(BASE);	// Indicamos que programa vamos a usar 
+
+	glGenFramebuffers(1, &renderBuffer);
 
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
@@ -111,7 +116,13 @@ void render_scene()
 	///////// Aqui vendr�a nuestr c�digo para actualizar escena  /////////	
 	mat4 M, T, R, S;
 
-	if(scene_flag == PIXEL1 || scene_flag == PIXEL2){
+	if(scene_flag == BASE){
+		R=rotate(t, vec3(0, 0, 1.f));  
+		T=translate(vec3(0.f, 0.f, 0.f));
+		M = T*R;
+
+		transfer_mat4("MVP", PP*VV*M);
+	}else if(scene_flag == PIXEL){
 		R=rotate(t, vec3(0, 0, 1.f));  
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
@@ -149,6 +160,14 @@ void render_scene()
 	//transfer_vec3("luz", L);
 
 	// ORDEN de dibujar
+
+	GLuint texturaRenderizada;
+	if(pixelArtActive){
+		glGenTextures(1, &texturaRenderizada);
+		glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texturaRenderizada, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
 
 	switch (model_flag)
 	{
@@ -255,9 +274,16 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_KP_SUBTRACT: rejilla.z-=0.1; break;
 
 			// Cambio de shader
-			case GLFW_KEY_0: change_scene(PIXEL1); break;
-			case GLFW_KEY_1: change_scene(PIXEL2); break;
+			case GLFW_KEY_1: change_scene(PIXEL); break;
 			case GLFW_KEY_2: change_scene(TOON); break;
+			case GLFW_KEY_B: change_scene(BASE); break;
+			case GLFW_KEY_0: 
+				if(pixelArtActive){
+					glDeleteTextures(1, &renderBuffer);
+				}else{
+					glGenFramebuffers(1, &renderBuffer);
+				}
+				break;
 			
 			//Intercambio de sombreado
 			case GLFW_KEY_TAB:
@@ -285,7 +311,7 @@ void change_scene(int option){
 	switch (option)
 	{
 	case 0:
-		printf("Pixel shading 1\n");
+		printf("Base shading\n");
 		change_model(SPIDER);
 		break;
 	case 1:
