@@ -1,7 +1,6 @@
 #version 330 core
 in vec3 n;
 in vec3 v;
-in vec2 UV;
 
 out vec3 col;  // Color fragmento
 

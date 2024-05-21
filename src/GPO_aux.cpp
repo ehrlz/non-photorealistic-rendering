@@ -184,9 +184,9 @@ GLuint Compile_Link_Shaders(const char* vertexShader_source,const char*fragmentS
 //////////////////  AUXILIARES 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GLuint cargar_textura(const char * imagepath, GLuint tex_unit)
+GLuint cargar_textura(const char * imagepath, GLuint tex_unit, bool obj)
 {
-  stbi_set_flip_vertically_on_load(false);
+  stbi_set_flip_vertically_on_load(!obj);
 
   int width, height,nrChannels;
   unsigned char* data = stbi_load(imagepath, &width, &height,&nrChannels,0);
@@ -511,9 +511,11 @@ objeto cargar_modelo_obj(const char* fichero) {
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 
+	// 2o argumento (atributo 1) del vertex shader (uv)
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
+	// 3er argumento (atributo 2) del vertex shader (nx,ny,nz)
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
@@ -523,7 +525,7 @@ objeto cargar_modelo_obj(const char* fichero) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_vec.size() * s_index, indices_vec.data(), GL_STATIC_DRAW);
 
-    glBindVertexArray(0);  // Cerramos Vertex Array con todo listo para ser pintado
+    glBindVertexArray(0);  // Cierre vertex array
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -607,7 +609,7 @@ void transfer_vec2(const char* name, vec2 x)
  glGetIntegerv(GL_CURRENT_PROGRAM,(GLint*)&prog);
  loc=glGetUniformLocation(prog,name);
  if (loc == -1) {
-	 printf("No existe variable llamada %s en el programa activo de la GPU (%d)\n", name, prog);
+	 printf("No existe variable llamCerramos Vertex Array con todo listo para ser pintadoada %s en el programa activo de la GPU (%d)\n", name, prog);
 	 glfwTerminate(); //exit(EXIT_FAILURE);
  }
  else glUniform2fv(loc, 1, &x[0]);

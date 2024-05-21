@@ -55,7 +55,7 @@ char* leer_codigo_de_fichero(const char*);
 
 
 GLuint cargar_cube_map(const char *, GLuint);
-GLuint cargar_textura(const char *,GLuint);
+GLuint cargar_textura(const char *,GLuint, bool);
 objeto cargar_modelo(char*);
 objeto cargar_modelo_obj(const char*);
 

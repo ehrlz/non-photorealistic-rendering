@@ -68,15 +68,15 @@ void init_scene()
     glViewport(0, 0, width, height); 
     
 	spider = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
-	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE0);
+	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE0, false);
 
 	buda = cargar_modelo("../data/buda_n.bix");
 
 	helmet = cargar_modelo_obj("../data/helmet.obj");
-	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE1);
+	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE1, true);
 
 	cat = cargar_modelo_obj("../data/cat.obj");
-	textura_cat = cargar_textura("../data/cat.jpg", GL_TEXTURE2);
+	textura_cat = cargar_textura("../data/cat.jpg", GL_TEXTURE2, true);
 
 	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //25º Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
 	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up
@@ -286,7 +286,10 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 				change_model((model_flag+1) % 4);
 				break;
 			case GLFW_KEY_COMMA:
-				change_model((model_flag-1) % 4);
+				--model_flag;
+				if(model_flag < 0)
+					model_flag = 0;
+				change_model(model_flag-1);
 				break;
 		}
 	}
@@ -321,6 +324,8 @@ void change_scene(int option){
 	glUseProgram(prog[option]);
 }
 
+void render_texture(int option);
+
 // SPIDER -> PIXEL, BUDA & HELMET -> TOON
 void change_model(int option){
 	if(option < 0 || option > 3){ // UPDATE IF A NEW MODEL IS IMPLEMENTED
@@ -331,39 +336,28 @@ void change_model(int option){
 	switch (option)
 	{
 	case 0:
-		if(scene_flag == TOON){
-			fprintf(stderr, "[ERROR] Modelo spiderman solo para modo pixel\n");
-			return;
-		}
 		printf("SPIDER\n");
 		break;
 	case 1:
-		if(scene_flag != TOON){
-			fprintf(stderr, "[ERROR] Modelo buda solo para modo toon\n");
-			return;
-		}
 		printf("BUDA\n");
 		break;
 	case 2:
-		if(scene_flag != TOON){
-			fprintf(stderr, "[ERROR] Modelo helmet solo para modo toon\n");
-			return;
-		}
-		transfer_int("unit",1);
+		if (scene_flag == TOON)
+			render_texture(1);
 		printf("HELMET\n");
 		break;
 	case 3:
-		if(scene_flag != TOON){
-			fprintf(stderr, "[ERROR] Modelo cat solo para modo toon\n");
-			return;
-		}
-		transfer_int("unit",2);
+		if (scene_flag == TOON)
+			render_texture(0);
 		printf("CAT\n");
 		break;
 	}
 	model_flag = option;
 }
 
+void render_texture(int option){
+	option ? transfer_int("unit",1) : transfer_int("unit",2);
+}
 
 void asigna_funciones_callback(GLFWwindow* window)
 {
