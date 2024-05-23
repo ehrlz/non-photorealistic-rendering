@@ -17,16 +17,15 @@ vec3 rejilla=vec3(16, 16, 0);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GLFWwindow* window;
-GLuint prog[3];
+GLuint prog[4];
 
 objeto spider;
 GLuint textura_spider;
-objeto buda;
+objeto ball;
 objeto helmet;
 GLuint textura_helmet;
 objeto cat;
 GLuint textura_cat;
-
 
 char* vertex_prog;
 char* fragment_prog;
@@ -36,8 +35,8 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
-enum SCENES {PIXEL1, PIXEL2, TOON, PHONG};
-enum MODELS {SPIDER, BUDA, HELMET, CAT};
+enum SCENES {PIXEL1, PIXEL2, TOON, PHONG, BLINN};
+enum MODELS {SPIDER, BALL, HELMET, CAT};
 
 void dibujar_indexado(objeto obj)
 {
@@ -58,6 +57,10 @@ mat4 PP, VV; // matrices de proyeccion y perspectiva
 float az = 0.f, el = .75f; // Azimut, elevación
 vec3 L; // Vector de iluminación
 
+// Toon shading
+float grosor = 0.3;
+
+
 // Preparación de los datos de los objetos a dibujar, envialarlos a la GPU
 // Compilación programas a ejecutar en la tarjeta gráfica:  vertex shader, fragment shaders
 // Opciones generales de render de OpenGL
@@ -70,7 +73,7 @@ void init_scene()
 	spider = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
 	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE0, false);
 
-	buda = cargar_modelo("../data/buda_n.bix");
+	ball = cargar_modelo_obj("../data/ball_fountain.obj");
 
 	helmet = cargar_modelo_obj("../data/helmet.obj");
 	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE1, true);
@@ -90,13 +93,17 @@ void init_scene()
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel2.fs");
 	prog[1] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
-	vertex_prog = leer_codigo_de_fichero("../data/shaders/toon.vs");
+	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/toon.fs");
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 	
 	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/phong.fs");
 	prog[3] = Compile_Link_Shaders(vertex_prog, fragment_prog);
+
+	// vertex shader is the same than phong
+	fragment_prog = leer_codigo_de_fichero("../data/shaders/blinn-phong.fs");
+	prog[4] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
 	change_scene(PIXEL1);	// Indicamos que programa vamos a usar 
@@ -127,33 +134,33 @@ void render_scene()
 		transfer_vec3("rejilla", rejilla);
 		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
 	}
-	else if(scene_flag == TOON || scene_flag == PHONG){
-		if(model_flag == BUDA){
-			mat4 R1 = rotate(radians(90.0f), vec3(1.f, 0.f, 0.f));
-			mat4 R2 = rotate(t, vec3(0.f, 1.f, 0.f));
-			T=translate(vec3(0.f, 0.f, 0.f));
-			M = T*R1*R2;
-
-			L = vec3(cos(az) * cos(el), sin(az), cos(az) * sin(el)); // al estar el buda "tumbado", az y el están invertidos
+	else if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN){
+		if(model_flag == BALL){
+			T=translate(vec3(0.f, 0.f, 0.5f));
+			S=scale(vec3(0.15f,0.15f,0.15f));
+			M = T * S;
 		}else if (model_flag == HELMET){
-			T=translate(vec3(0.f, 0.f, 0.f));
+			T=translate(vec3(0.f, 0.f, 0.5f));
 			R=rotate(t, vec3(0.f, 0.f, 1.f));
 			S=scale(vec3(0.1f,0.1f,0.1f));
 			M = T * R * S;
-
-			L = vec3(cos(az) * cos(el), sin(az), cos(az) * sin(el));
 		}else if (model_flag == CAT){
 			T=translate(vec3(0.f, 0.f, 0.f));
 			R=rotate(t, vec3(0.f, 0.f, 1.f));
 			S=scale(vec3(0.05f,0.05f,0.05f));
 			M = T * R * S;
-
-			L = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
 		}
+
+		L = vec3(2*sqrt(2)*cos(az), 2*sqrt(2)*sin(az), 1) / 3.f;
 
 		transfer_mat4("PV",PP*VV);
 		transfer_mat4("M", M);
 		transfer_vec3("luz", L);
+
+		if(scene_flag == TOON){
+			transfer_int("grosor", grosor);
+			transfer_vec3("campos",pos_obs);
+		}
 	}else{
 		fprintf(stderr, "[ERROR]: Bad scene def.\n");
 	}
@@ -168,8 +175,8 @@ void render_scene()
 		case SPIDER:
 		dibujar_indexado(spider);
 		break;
-		case BUDA:
-		dibujar_indexado(buda);
+		case BALL:
+		dibujar_indexado(ball);
 		break;
 		case HELMET:
 		dibujar_indexado(helmet);
@@ -252,14 +259,14 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_UP: rejilla.y+=0.1; break; // Aumento de longitud pixeles en y
 			case GLFW_KEY_DOWN: rejilla.y-=0.1; break; // Disminucion de longitud pixeles en y
 			case GLFW_KEY_LEFT: 
-				if(scene_flag == TOON){
+				if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN){
 					az -= LIGHT_MOVE_SCALE;
 				}else{ // Disminucion de longitud pixeles en x
 					rejilla.x-=0.1;
 				}
 				break;
 			case GLFW_KEY_RIGHT:
-				if(scene_flag == TOON){
+				if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN){
 					az += LIGHT_MOVE_SCALE;
 				}else{ // Aumento de longitud pixeles en x
 					rejilla.x+=0.1;
@@ -275,6 +282,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_1: change_scene(PIXEL2); break;
 			case GLFW_KEY_2: change_scene(TOON); break;
 			case GLFW_KEY_3: change_scene(PHONG); break;
+			case GLFW_KEY_4: change_scene(BLINN); break;
 			
 			//Intercambio de sombreado
 			case GLFW_KEY_TAB:
@@ -296,7 +304,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 }
 
 void change_scene(int option){
-	if(option < 0 || option > 3){ // UPDATE IF A NEW SHADER IS IMPLEMENTED
+	if(option < 0 || option > 4){ // UPDATE IF A NEW SHADER IS IMPLEMENTED
 		fprintf(stderr,"Scene not available\n");
 		return;
 	} 
@@ -314,11 +322,15 @@ void change_scene(int option){
 		break;
 	case 2:
 		printf("Toon shading\n");
-		change_model(BUDA);
+		change_model(model_flag);
 		break;
 	case 3:
 		printf("Phong shading\n");
-		change_model(BUDA);
+		change_model(model_flag);
+		break;
+	case 4:
+		printf("Blinn-phong shading\n");
+		change_model(model_flag);
 		break;
 	}
 	glUseProgram(prog[option]);
@@ -326,7 +338,7 @@ void change_scene(int option){
 
 void render_texture(int option);
 
-// SPIDER -> PIXEL, BUDA & HELMET -> TOON
+// SPIDER -> PIXEL, esfera & HELMET -> TOON
 void change_model(int option){
 	if(option < 0 || option > 3){ // UPDATE IF A NEW MODEL IS IMPLEMENTED
 		fprintf(stderr,"Model not available\n");
@@ -339,7 +351,7 @@ void change_model(int option){
 		printf("SPIDER\n");
 		break;
 	case 1:
-		printf("BUDA\n");
+		printf("BALL\n");
 		break;
 	case 2:
 		if (scene_flag == TOON)
