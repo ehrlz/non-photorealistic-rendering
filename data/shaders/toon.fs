@@ -8,6 +8,7 @@ out vec3 col;  // Color fragmento
 uniform vec3 luz = vec3(1, 1, 0) / sqrt(2.0f); // light vector
 uniform sampler2D unit; // texture
 uniform float grosor = 0.3;
+uniform int render_texture = 1;
 
 vec4 coef = vec4(.2f,.7f,.1f,1.f); // phong coef 20% ambiental + 70% diffuse + 10% spec.
 
@@ -44,5 +45,8 @@ void main()
 	}  else if (ilu <= 1){
 		ilu = 0.75;
 	}
-	col = texture(unit, UV).rgb * ilu;
+	if(render_texture == 1)
+		col = texture(unit, UV).rgb * ilu;
+	else
+		col = vec3(1,1,1) * ilu;
 }

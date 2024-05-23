@@ -17,7 +17,7 @@ vec3 rejilla=vec3(16, 16, 0);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GLFWwindow* window;
-GLuint prog[4];
+GLuint prog[5];
 
 objeto spider;
 GLuint textura_spider;
@@ -60,6 +60,7 @@ vec3 L; // Vector de iluminación
 // Toon shading
 float grosor = 0.3;
 
+int render_texture = 1; // por defecto, encendido
 
 // Preparación de los datos de los objetos a dibujar, envialarlos a la GPU
 // Compilación programas a ejecutar en la tarjeta gráfica:  vertex shader, fragment shaders
@@ -86,21 +87,27 @@ void init_scene()
 
 	// Compilado de Shaders
 	// Mandar programas a GPU, compilar y crear programa en GPU
+
+	// PIXEL 1
 	vertex_prog = leer_codigo_de_fichero("../data/shaders/pixel.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel1.fs");
 	prog[0] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
+	// PIXEL 2
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel2.fs");
 	prog[1] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
+	// TOON SHADING
 	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/toon.fs");
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 	
+	// PHONG SHADING
 	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/phong.fs");
 	prog[3] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
+	// BLINN-PHONG SHADING
 	// vertex shader is the same than phong
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/blinn-phong.fs");
 	prog[4] = Compile_Link_Shaders(vertex_prog, fragment_prog);
@@ -151,11 +158,16 @@ void render_scene()
 			M = T * R * S;
 		}
 
+		// Cálculo de la dirección de la luz
 		L = vec3(2*sqrt(2)*cos(az), 2*sqrt(2)*sin(az), 1) / 3.f;
+		transfer_vec3("luz", L);
 
+		// Se transfieren las matrices de modelado
 		transfer_mat4("PV",PP*VV);
 		transfer_mat4("M", M);
-		transfer_vec3("luz", L);
+		
+		// Opción para renderizar o no texturas en los shaders
+		transfer_int("render_texture", render_texture);
 
 		if(scene_flag == TOON){
 			transfer_int("grosor", grosor);
@@ -299,6 +311,16 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 					model_flag = 0;
 				change_model(model_flag-1);
 				break;
+
+			case GLFW_KEY_T:
+				// BALL_FOUNTAIN DOESN'T HAVE TEXTURE
+				// TODO: IMPLEMENT SWITCH PIXEL SHADER
+				if(model_flag == BALL || scene_flag == PIXEL1 || scene_flag == PIXEL2)
+					break;
+				render_texture = ++render_texture % 2; 
+				printf("RENDER STATUS: %d\n", render_texture);
+				transfer_int("render_texture",render_texture);
+				break;
 		}
 	}
 }
@@ -336,7 +358,6 @@ void change_scene(int option){
 	glUseProgram(prog[option]);
 }
 
-void render_texture(int option);
 
 // SPIDER -> PIXEL, esfera & HELMET -> TOON
 void change_model(int option){
@@ -354,21 +375,19 @@ void change_model(int option){
 		printf("BALL\n");
 		break;
 	case 2:
-		if (scene_flag == TOON)
-			render_texture(1);
+		if (scene_flag == TOON){
+			transfer_int("unit",1);
+		}
 		printf("HELMET\n");
 		break;
 	case 3:
-		if (scene_flag == TOON)
-			render_texture(0);
+		if (scene_flag == TOON){
+			transfer_int("unit",2);
+		}
 		printf("CAT\n");
 		break;
 	}
 	model_flag = option;
-}
-
-void render_texture(int option){
-	option ? transfer_int("unit",1) : transfer_int("unit",2);
 }
 
 void asigna_funciones_callback(GLFWwindow* window)
