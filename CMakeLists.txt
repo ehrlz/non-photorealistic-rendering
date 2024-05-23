@@ -26,12 +26,11 @@ add_subdirectory(libs/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(libs/glm )
 add_subdirectory(libs/glad)
 add_subdirectory(${ASSIMP_DIR})
-add_subdirectory(libs/imgui)
+add_subdirectory(${CMAKE_SOURCE_DIR}/libs/imgui EXCLUDE_FROM_ALL)
 
 include_directories(libs/glad/include)
 include_directories(libs/glm)
 include_directories(${ASSIMP_DIR}/include)
-include_directories(libs/imgui)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/include/KHR)
