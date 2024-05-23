@@ -84,4 +84,6 @@ void init_GLFW(void);
 void load_Opengl(void);
 GLFWwindow*  Init_Window(const char*);
 
-
+void setupImGui(GLFWwindow* window);
+void renderImGui(void);
+void terminateImGui(void);

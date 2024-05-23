@@ -207,6 +207,9 @@ int main(int argc, char* argv[])
 {
 	init_GLFW();            // Inicializa lib GLFW
 	window = Init_Window(prac);  // Crea ventana usando GLFW, asociada a un contexto OpenGL	X.Y
+	
+	setupImGui(window);
+
 	load_Opengl();         // Carga funciones de OpenGL, comprueba versi�n.
 	init_scene();          // Prepara escena
 	
@@ -214,11 +217,15 @@ int main(int argc, char* argv[])
 	while (!glfwWindowShouldClose(window))
 	{
 		render_scene();
+
+		renderImGui();
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 		show_info();
 	}
 
+	terminateImGui();
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
 }
