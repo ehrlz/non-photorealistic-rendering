@@ -31,5 +31,5 @@ void main()
     if(render_texture == 1)
 		col = texture(unit, UV).rgb * ilu;
 	else
-		col = col = model_color * ilu; * ilu;
+		col = model_color * ilu;
 }

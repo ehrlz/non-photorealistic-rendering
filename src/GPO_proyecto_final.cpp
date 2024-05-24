@@ -5,7 +5,7 @@ Alonso García Elías Herrero, 2024
 #include <GpO.h>
 
 // TAMAÑO y TITULO INICIAL de la VENTANA
-int ANCHO = 800, ALTO = 600;  // Tamaño inicial ventana
+int ANCHO = 1200, ALTO = 900;  // Tamaño inicial ventana
 const char* prac = "Proyecto NPR";   // Nombre de la practica (aparecera en el titulo de la ventana).
 GLuint posRejilla;
 vec3 rejilla=vec3(16, 16, 0);
@@ -96,12 +96,11 @@ void init_scene()
 	prog[1] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
 	// TOON SHADING
-	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs");
+	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs"); // same v.s. as phong
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/toon.fs");
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 	
 	// PHONG SHADING
-	vertex_prog = leer_codigo_de_fichero("../data/shaders/phong.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/phong.fs");
 	prog[3] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
@@ -165,11 +164,7 @@ void render_scene()
 		transfer_mat4("M", M);
 	}
 	
-	//L = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
-	//transfer_vec3("luz", L);
-
-	// ORDEN de dibujar
-
+	// DIBUJO DEL MODELO
 	switch (model_flag)
 	{
 		case SPIDER:
@@ -193,10 +188,13 @@ void apply_options()
 	// SHADER
 	glUseProgram(prog[scene_flag]);
 
+	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
+		transfer_vec3("campos",pos_obs);
+	}
+
 	if(scene_flag == TOON){
 		transfer_float("toon_border", toon_border);
 		transfer_int("color_levels", color_levels);
-		transfer_vec3("campos",pos_obs);
 	}
 
 	// TEXTURE
@@ -205,7 +203,7 @@ void apply_options()
 	case SPIDER:
 		break;
 	case BALL:
-		render_texture = 0;
+		render_texture = 0; // ball doesn't have texture
 		break;
 	case HELMET:
 		if(scene_flag != PIXEL1 && scene_flag != PIXEL2)
