@@ -166,8 +166,8 @@ void render_scene()
 		}
 
 		// Cálculo de la dirección de la luz
-		L = vec3(2*sqrt(2)*cos(az), 2*sqrt(2)*sin(az), 1) / 3.f;
-		transfer_vec3("luz", L);
+		L = vec3(2*sqrt(2)*cos(az), 2*sqrt(2)*sin(az), 1) / 3.f; // normalizado
+		transfer_vec3("light", L);
 
 		// Se transfieren las matrices de modelado
 		transfer_mat4("PV",PP*VV);
