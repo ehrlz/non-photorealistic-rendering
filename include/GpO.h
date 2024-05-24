@@ -85,5 +85,9 @@ void load_Opengl(void);
 GLFWwindow*  Init_Window(const char*);
 
 void setupImGui(GLFWwindow* window);
-void renderImGui(void);
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture);
 void terminateImGui(void);
+
+// CONTENT
+enum SCENES {PIXEL1, PIXEL2, TOON, PHONG, BLINN};
+enum MODELS {SPIDER, BALL, HELMET, CAT};

@@ -35,8 +35,9 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
-enum SCENES {PIXEL1, PIXEL2, TOON, PHONG, BLINN};
-enum MODELS {SPIDER, BALL, HELMET, CAT};
+float az = 0.f, el = .75f; // Azimut, elevación
+float toon_border = 0.3; // Toon shading
+int render_texture = 1; // // Option (defecto: encendido)
 
 void dibujar_indexado(objeto obj)
 {
@@ -54,13 +55,7 @@ vec3 up = vec3(0, 0, 1);
 mat4 PP, VV; // matrices de proyeccion y perspectiva
 
 // Iluminación
-float az = 0.f, el = .75f; // Azimut, elevación
-vec3 L; // Vector de iluminación
-
-// Toon shading
-float grosor = 0.3;
-
-int render_texture = 1; // por defecto, encendido
+vec3 L;
 
 // Preparación de los datos de los objetos a dibujar, envialarlos a la GPU
 // Compilación programas a ejecutar en la tarjeta gráfica:  vertex shader, fragment shaders
@@ -165,16 +160,6 @@ void render_scene()
 		// Se transfieren las matrices de modelado
 		transfer_mat4("PV",PP*VV);
 		transfer_mat4("M", M);
-		
-		// Opción para renderizar o no texturas en los shaders
-		transfer_int("render_texture", render_texture);
-
-		if(scene_flag == TOON){
-			transfer_int("grosor", grosor);
-			transfer_vec3("campos",pos_obs);
-		}
-	}else{
-		fprintf(stderr, "[ERROR]: Bad scene def.\n");
 	}
 	
 	//L = vec3(cos(el) * cos(az), sin(el), cos(el) * sin(az));
@@ -200,6 +185,40 @@ void render_scene()
 }
 
 
+void apply_options()
+{	
+	// SHADER
+	glUseProgram(prog[scene_flag]);
+
+	if(scene_flag == TOON){
+		transfer_int("toon_border", toon_border);
+		transfer_vec3("campos",pos_obs);
+	}
+
+	// TEXTURE
+	switch (model_flag)
+	{
+	case SPIDER:
+		break;
+	case BALL:
+		render_texture = 0;
+		break;
+	case HELMET:
+		if(scene_flag != PIXEL1 && scene_flag != PIXEL2)
+			transfer_int("unit",1);
+		break;
+	case CAT:
+		if(scene_flag != PIXEL1 && scene_flag != PIXEL2)
+			transfer_int("unit",2);
+		break;
+	}
+
+	// OPTIONS
+	// Opción para renderizar o no texturas en los shaders
+	if(scene_flag != PIXEL1 && scene_flag != PIXEL2) // TODO
+		transfer_int("render_texture", render_texture);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// PROGRAMA PRINCIPAL
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,7 +237,9 @@ int main(int argc, char* argv[])
 	{
 		render_scene();
 
-		renderImGui();
+		renderImGui(&scene_flag, &model_flag, &render_texture);
+
+		apply_options(); // aplica los casos de uso
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
