@@ -20,15 +20,14 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove;
+    ImVec2 display_size = ImGui::GetIO().DisplaySize;
+
     // First window in top right corner (only first use, can be moved)
-    int width_window = 255;
-    int height_window = 175;
-    const ImGuiViewport* main_viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x + (1200 - width_window), main_viewport->WorkPos.y)); //ImGuiCond_FirstUseEver for only first use
-    ImGui::SetNextWindowSize(ImVec2(width_window, height_window));
-    
+    ImGui::SetNextWindowPos(ImVec2(display_size.x, 0), ImGuiCond_Always, ImVec2(1.0f, 0.0f));
+
     // First window: shader and model selector
-    ImGui::Begin("Scenes", NULL, ImGuiWindowFlags_NoMove || ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Scenes", NULL, window_flags);
     ImGui::SeparatorText("Shaders");
     ImGui::RadioButton("Pixel1", scene_flag, PIXEL1); ImGui::SameLine();
     ImGui::RadioButton("Pixel2", scene_flag, PIXEL2);
@@ -47,15 +46,12 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     ImGui::End();
 
     // Second window pos: top left corner
-    width_window = 300;
-    height_window = 350;
-    ImGui::SetNextWindowPos(ImVec2(main_viewport->WorkPos.x, main_viewport->WorkPos.y));
-    ImGui::SetNextWindowSize(ImVec2(300, 350));
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always, ImVec2(0.0f, 0.0f));
 
     // Second window: Shader and texture options
-    ImGui::Begin("Scene options", NULL, ImGuiWindowFlags_NoMove && ImGuiWindowFlags_NoResize);
+    ImGui::Begin("Scene options", NULL, window_flags);
     if(*scene_flag != PIXEL1 && *scene_flag != PIXEL2){ // TODO PIXEL
-        if(*render_texture == 0){ // color shouldn't be defined with active texture
+        if(*render_texture == 0){ // color only can be defined with no texture
             float col[3] = {model_color->x,model_color->y,model_color->z};
             ImGui::ColorPicker3("Model color", col, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
             ImGui::ColorEdit3("Model color", col);
@@ -64,7 +60,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
             model_color->z = col[2];
         }
         if(*model_flag != BALL){
-            ImGui::Checkbox("Render textures", (bool *)render_texture); // Fountain ball doesn't have texture,
+            ImGui::Checkbox("Render textures", (bool *)render_texture); // Fountain ball doesn't have texture
         } else {
             ImGui::Dummy(ImVec2(0.0f, 20.0f)); // vertical spacing
         }
@@ -82,7 +78,25 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         ImGui::SliderFloat("Beta", beta, 0.0f, 1.f, "ratio = %.05f");
     }
     ImGui::End();
-        
+
+    // Third window pos: bottom right corner
+    ImGui::SetNextWindowPos(ImVec2(display_size.x, display_size.y), ImGuiCond_Always, ImVec2(1.0f, 1.0f));
+
+    // Third window: Info. 
+    window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    ImGui::Begin("Info", NULL, window_flags);
+    if(*scene_flag == TOON || *scene_flag == PHONG || *scene_flag == BLINN || *scene_flag == GOOCH)
+        ImGui::Text("<- and -> to change light direction");
+    else
+         ImGui::Dummy(ImVec2(0.0f, 15.0f)); // vertical spacing
+
+    if(*model_flag == HELMET || *model_flag == CAT)
+        ImGui::Text("<space> to switch rotation");
+    else
+         ImGui::Dummy(ImVec2(0.0f, 15.0f)); // vertical spacing
+    ImGui::Text("https://github.com/ehrlz/non-photorealistic-rendering.git");
+    ImGui::End();
+
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
