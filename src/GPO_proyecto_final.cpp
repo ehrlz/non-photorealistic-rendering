@@ -17,7 +17,7 @@ vec3 rejilla=vec3(16, 16, 0);
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GLFWwindow* window;
-GLuint prog[5];
+GLuint prog[6];
 
 objeto spider;
 GLuint textura_spider;
@@ -35,9 +35,16 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
+// ----- SHADER PARAMS -----
 float az = 0.f, el = .75f; // Azimut, elevación
-float toon_border = 0.3; // Toon shading
+
+float toon_border = 0.2; // Toon shading
 int color_levels = 3;
+
+float b_lightness = 1.f; // Gooch
+float y_lightness = 1.f;
+float alpha = 0.f;
+float beta = 0.f;
 
 int render_texture = 1; // // Option (defecto: encendido)
 vec3 model_color = vec3(1,1,1);
@@ -109,6 +116,9 @@ void init_scene()
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/blinn-phong.fs");
 	prog[4] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
+	fragment_prog = leer_codigo_de_fichero("../data/shaders/gooch.fs");
+	prog[5] = Compile_Link_Shaders(vertex_prog, fragment_prog);
+
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
 	change_scene(PIXEL1);	// Indicamos que programa vamos a usar 
 
@@ -138,7 +148,7 @@ void render_scene()
 		transfer_vec3("rejilla", rejilla);
 		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
 	}
-	else if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN){
+	else {
 		if(model_flag == BALL){
 			T=translate(vec3(0.f, 0.f, 0.5f));
 			S=scale(vec3(0.15f,0.15f,0.15f));
@@ -188,13 +198,18 @@ void apply_options()
 	// SHADER
 	glUseProgram(prog[scene_flag]);
 
-	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
+	if(scene_flag != PIXEL1 && scene_flag != PIXEL2 && scene_flag != GOOCH){
 		transfer_vec3("campos",pos_obs);
 	}
 
 	if(scene_flag == TOON){
 		transfer_float("toon_border", toon_border);
 		transfer_int("color_levels", color_levels);
+	} else if(scene_flag == GOOCH) {
+		transfer_float("b_lightness", b_lightness);
+		transfer_float("y_lightness", y_lightness);
+		transfer_float("alpha",alpha);
+		transfer_float("beta",beta);
 	}
 
 	// TEXTURE
@@ -217,7 +232,9 @@ void apply_options()
 
 	// OPTIONS
 	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){ // TODO
-		transfer_int("render_texture", render_texture); // renderizar o no
+		if(scene_flag != GOOCH){
+			transfer_int("render_texture", render_texture); // renderizar o no
+		}
 		transfer_vec3("model_color", model_color); // selec color si no hay textura
 	} 
 }
@@ -240,7 +257,8 @@ int main(int argc, char* argv[])
 	{
 		render_scene();
 
-		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border, &model_color);
+		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border,
+					&model_color, &b_lightness, &y_lightness, &alpha, &beta);
 
 		apply_options(); // aplica los casos de uso
 

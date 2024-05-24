@@ -14,7 +14,8 @@ void setupImGui(GLFWwindow* window) {
     ImGui_ImplOpenGL3_Init("#version 130");
 }
 
-void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border, vec3 *model_color) {
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border,
+                vec3 *model_color, float *b_lightness, float *y_lightness, float *alpha, float *beta) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -35,7 +36,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         ImGui::RadioButton("Toon", scene_flag, TOON); ImGui::SameLine();
         ImGui::RadioButton("Phong", scene_flag, PHONG); ImGui::SameLine();
         ImGui::RadioButton("Blinn-Phong", scene_flag, BLINN);
-        //ImGui::RadioButton("Goosh", scene_flag, GOOSH);
+        ImGui::RadioButton("Gooch", scene_flag, GOOCH);
     }
     
     ImGui::SeparatorText("Models");
@@ -73,6 +74,12 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     if(*scene_flag == TOON){
         ImGui::SliderFloat("Border", toon_border, 0.0f, 0.5f, "ratio = %.05f");
         ImGui::SliderInt("Color levels", color_levels, 3, 7);
+    }
+    if(*scene_flag == GOOCH){
+        ImGui::SliderFloat("B_lightness", b_lightness, 0.0f, 1.f, "ratio = %.05f");
+        ImGui::SliderFloat("Y_lightness", y_lightness, 0.0f, 1.f, "ratio = %.05f");
+        ImGui::SliderFloat("Alpha", alpha, 0.0f, 1.f, "ratio = %.05f");
+        ImGui::SliderFloat("Beta", beta, 0.0f, 1.f, "ratio = %.05f");
     }
     ImGui::End();
         
