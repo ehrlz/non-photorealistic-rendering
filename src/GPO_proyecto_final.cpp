@@ -193,7 +193,7 @@ void apply_options()
 	glUseProgram(prog[scene_flag]);
 
 	if(scene_flag == TOON){
-		transfer_int("toon_border", toon_border);
+		transfer_float("toon_border", toon_border);
 		transfer_int("color_levels", color_levels);
 		transfer_vec3("campos",pos_obs);
 	}
@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
 	{
 		render_scene();
 
-		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels);
+		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border);
 
 		apply_options(); // aplica los casos de uso
 

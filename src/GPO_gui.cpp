@@ -14,7 +14,7 @@ void setupImGui(GLFWwindow* window) {
     ImGui_ImplOpenGL3_Init("#version 130");
 }
 
-void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels) {
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -43,6 +43,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 
     if(*scene_flag == TOON){
         ImGui::SeparatorText("Toon shading params");
+        ImGui::SliderFloat("Border", toon_border, 0.0f, 0.5f, "ratio = %.05f");
         ImGui::SliderInt("Color levels", color_levels, 3, 7);
     }
         
