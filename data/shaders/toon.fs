@@ -9,6 +9,7 @@ uniform vec3 luz = vec3(1, 1, 0) / sqrt(2.0f); // light vector
 uniform sampler2D unit; // texture
 uniform float toon_border = 0.3;
 uniform int render_texture = 1;
+uniform int color_levels;
 
 vec4 coef = vec4(.2f,.7f,.1f,1.f); // phong coef 20% ambiental + 70% diffuse + 10% spec.
 
@@ -36,15 +37,9 @@ void main()
 		return;
 	}
 	// color scaling
-	if (ilu < 0.25){
-		ilu = 0.1;
-	} else if (ilu < 0.5){
-		ilu = 0.25;
-	} else if (ilu < 0.75){
-		ilu = 0.5;
-	}  else if (ilu <= 1){
-		ilu = 0.75;
-	}
+	float level_range = 1.f / color_levels; // defines how big is a color range
+	ilu = trunc(ilu / level_range) * level_range;
+
 	if(render_texture == 1)
 		col = texture(unit, UV).rgb * ilu;
 	else

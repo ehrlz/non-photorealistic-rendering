@@ -14,7 +14,7 @@ void setupImGui(GLFWwindow* window) {
     ImGui_ImplOpenGL3_Init("#version 130");
 }
 
-void renderImGui(int *scene_flag, int *model_flag, int *render_texture) {
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -40,6 +40,12 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture) {
     ImGui::SeparatorText("Options");
     if(*model_flag != BALL && (*scene_flag != PIXEL1 && *scene_flag != PIXEL2)) // Fountain ball don't have texture, TODO PIXEL
         ImGui::Checkbox("Render textures", (bool *)render_texture);
+
+    if(*scene_flag == TOON){
+        ImGui::SeparatorText("Toon shading params");
+        ImGui::SliderInt("Color levels", color_levels, 3, 7);
+    }
+        
     ImGui::End();
 
     ImGui::Render();

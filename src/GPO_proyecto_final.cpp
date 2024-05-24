@@ -37,6 +37,8 @@ void change_model(int option);
 
 float az = 0.f, el = .75f; // Azimut, elevación
 float toon_border = 0.3; // Toon shading
+int color_levels = 3;
+
 int render_texture = 1; // // Option (defecto: encendido)
 
 void dibujar_indexado(objeto obj)
@@ -192,6 +194,7 @@ void apply_options()
 
 	if(scene_flag == TOON){
 		transfer_int("toon_border", toon_border);
+		transfer_int("color_levels", color_levels);
 		transfer_vec3("campos",pos_obs);
 	}
 
@@ -237,7 +240,7 @@ int main(int argc, char* argv[])
 	{
 		render_scene();
 
-		renderImGui(&scene_flag, &model_flag, &render_texture);
+		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels);
 
 		apply_options(); // aplica los casos de uso
 
