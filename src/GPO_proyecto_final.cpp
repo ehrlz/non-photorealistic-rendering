@@ -40,6 +40,7 @@ float toon_border = 0.3; // Toon shading
 int color_levels = 3;
 
 int render_texture = 1; // // Option (defecto: encendido)
+vec3 model_color = vec3(1,1,1);
 
 void dibujar_indexado(objeto obj)
 {
@@ -217,9 +218,10 @@ void apply_options()
 	}
 
 	// OPTIONS
-	// Opción para renderizar o no texturas en los shaders
-	if(scene_flag != PIXEL1 && scene_flag != PIXEL2) // TODO
-		transfer_int("render_texture", render_texture);
+	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){ // TODO
+		transfer_int("render_texture", render_texture); // renderizar o no
+		transfer_vec3("model_color", model_color); // selec color si no hay textura
+	} 
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,7 +242,7 @@ int main(int argc, char* argv[])
 	{
 		render_scene();
 
-		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border);
+		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border, &model_color);
 
 		apply_options(); // aplica los casos de uso
 

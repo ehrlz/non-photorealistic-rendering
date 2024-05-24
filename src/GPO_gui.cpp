@@ -14,7 +14,7 @@ void setupImGui(GLFWwindow* window) {
     ImGui_ImplOpenGL3_Init("#version 130");
 }
 
-void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border) {
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border, vec3 *model_color) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -38,8 +38,19 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     ImGui::RadioButton("Cat", model_flag, CAT);
 
     ImGui::SeparatorText("Options");
-    if(*model_flag != BALL && (*scene_flag != PIXEL1 && *scene_flag != PIXEL2)) // Fountain ball don't have texture, TODO PIXEL
-        ImGui::Checkbox("Render textures", (bool *)render_texture);
+    if(*scene_flag != PIXEL1 && *scene_flag != PIXEL2){ // TODO PIXEL
+        if(*model_flag != BALL){
+            ImGui::Checkbox("Render textures", (bool *)render_texture); // Fountain ball doesn't have texture,
+        }
+        if(*render_texture == 0){ // color shouldn't be defined with active texture
+            float col[3] = {model_color->x,model_color->y,model_color->z};
+            ImGui::ColorEdit3("Model color", col);
+            model_color->x = col[0];
+            model_color->y = col[1];
+            model_color->z = col[2];
+        }
+    } 
+        
 
     if(*scene_flag == TOON){
         ImGui::SeparatorText("Toon shading params");

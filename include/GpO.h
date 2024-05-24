@@ -85,7 +85,7 @@ void load_Opengl(void);
 GLFWwindow*  Init_Window(const char*);
 
 void setupImGui(GLFWwindow* window);
-void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border);
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border, vec3 *model_color);
 void terminateImGui(void);
 
 // CONTENT
