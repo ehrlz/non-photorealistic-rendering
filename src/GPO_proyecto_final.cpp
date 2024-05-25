@@ -18,8 +18,13 @@ vec3 rejilla=vec3(16, 16, 0);
 
 GLFWwindow* window;
 GLuint prog[3];
+GLuint progSecondRender;
 
-GLuint renderBuffer;
+GLuint renderBuffer=0;
+GLuint secondRenderTexture;
+GLuint bufferProfundidad;
+GLuint texID;
+GLuint quad_vertexbuffer;
 
 objeto spider;
 GLuint textura_spider;
@@ -29,6 +34,18 @@ GLuint textura_helmet;
 
 char* vertex_prog;
 char* fragment_prog;
+
+char* vertex_progSecondRender;
+char* fragment_progSecondRender;
+
+static const GLfloat g_quad_vertex_buffer_data[] = {
+	-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+	-1.0f,  1.0f, 0.0f,
+	-1.0f,  1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+		1.0f,  1.0f, 0.0f,
+};
 
 int scene_flag = 0;
 int model_flag = 0;
@@ -58,6 +75,57 @@ mat4 PP, VV; // matrices de proyeccion y perspectiva
 float az = 0.f, el = .75f; // Azimut, elevación
 vec3 L; // Vector de iluminación
 
+void initFrameBuffer(){
+	// Creación de framebuffer
+	glGenFramebuffers(1, &renderBuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
+
+	// Creación de textura para almacenar el renderizado
+	glActiveTexture(GL_TEXTURE5);
+	glGenTextures(1, &secondRenderTexture);
+    glBindTexture(GL_TEXTURE_2D, secondRenderTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ANCHO, ALTO, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+	// Creación de renderbuffer para almacenar la profundidad y el stencil
+    glGenRenderbuffers(1, &bufferProfundidad);
+    glBindRenderbuffer(GL_RENDERBUFFER, bufferProfundidad);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, ANCHO, ALTO);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, bufferProfundidad);
+
+	// Asociamos la textura al framebuffer
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, secondRenderTexture, 0);
+
+	// Se añade a la lista de buffers a dibujar
+	GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+	glDrawBuffers(1, DrawBuffers);
+
+	// Comprobación de errores
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
+		fprintf(stderr, "ERROR::FRAMEBUFFER:: Framebuffer no esta completo!\n");
+		return;
+	}
+
+	vertex_progSecondRender = leer_codigo_de_fichero("../data/shaders/pixelArt.vs");
+	fragment_progSecondRender = leer_codigo_de_fichero("../data/shaders/pixelArt.fs");
+	progSecondRender = Compile_Link_Shaders(vertex_progSecondRender, fragment_progSecondRender);
+
+	GLuint quad_VertexArrayID;
+    glGenVertexArrays(1, &quad_VertexArrayID);
+    glBindVertexArray(quad_VertexArrayID); 
+
+    glGenBuffers(1, &quad_vertexbuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
+	texID =  glGetUniformLocation(progSecondRender, "secondRenderTexture");
+
+	// Vinclamos el framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, 0); 
+}
+
 // Preparaci�n de los datos de los objetos a dibujar, envialarlos a la GPU
 // Compilaci�n programas a ejecutar en la tarjeta gr�fica:  vertex shader, fragment shaders
 // Opciones generales de render de OpenGL
@@ -83,7 +151,7 @@ void init_scene()
 
 	// Compilado de Shaders
 	// Mandar programas a GPU, compilar y crear programa en GPU
-	vertex_prog = leer_codigo_de_fichero("../data/shaders/pixel.vs");
+	vertex_prog = leer_codigo_de_fichero("../data/shaders/base.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/base.fs");
 	prog[0] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
@@ -93,17 +161,48 @@ void init_scene()
 	vertex_prog = leer_codigo_de_fichero("../data/shaders/toon.vs");
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/toon.fs");
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
-	
+
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
 	change_scene(BASE);	// Indicamos que programa vamos a usar 
 
-	glGenFramebuffers(1, &renderBuffer);
+	initFrameBuffer();
 
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 }
 
 // float fov = 35.0f, aspect = 4.0f / 3.0f; //###float fov = 40.0f, aspect = 4.0f / 3.0f;
+
+void secondRender() {
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, ANCHO, ALTO);
+	// glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glUseProgram(progSecondRender);
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, secondRenderTexture);
+	transfer_int("unit", 5);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
+	glVertexAttribPointer(
+		0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+		3,                  // size
+		GL_FLOAT,           // type
+		GL_FALSE,           // normalized?
+		0,                  // stride
+		(void*)0            // array buffer offset
+	);
+
+	// Draw the triangle !
+	glDrawArrays(GL_TRIANGLES, 0, 6); // From index 0 to 3 -> 1 triangle
+
+	glDisableVertexAttribArray(0);
+
+	glUseProgram(prog[scene_flag]);
+}
+
 
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
 void render_scene()
@@ -116,20 +215,21 @@ void render_scene()
 	///////// Aqui vendr�a nuestr c�digo para actualizar escena  /////////	
 	mat4 M, T, R, S;
 
-	if(scene_flag == BASE){
+	if(pixelArtActive){
+		glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
+	}
+
+	if(scene_flag == BASE || scene_flag == PIXEL){
 		R=rotate(t, vec3(0, 0, 1.f));  
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
 
 		transfer_mat4("MVP", PP*VV*M);
-	}else if(scene_flag == PIXEL){
-		R=rotate(t, vec3(0, 0, 1.f));  
-		T=translate(vec3(0.f, 0.f, 0.f));
-		M = T*R;
-
-		transfer_mat4("MVP", PP*VV*M);
-		transfer_vec3("rejilla", rejilla);
-		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
+		
+		if(scene_flag == PIXEL){
+			transfer_vec3("rejilla", rejilla);
+			transfer_vec2("resolucion", vec2(ANCHO, ALTO));
+		}
 	}
 	else if(scene_flag == TOON){
 		if(model_flag == BUDA){
@@ -160,15 +260,6 @@ void render_scene()
 	//transfer_vec3("luz", L);
 
 	// ORDEN de dibujar
-
-	GLuint texturaRenderizada;
-	if(pixelArtActive){
-		glGenTextures(1, &texturaRenderizada);
-		glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texturaRenderizada, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
-
 	switch (model_flag)
 	{
 		case SPIDER:
@@ -181,8 +272,11 @@ void render_scene()
 		dibujar_indexado(helmet);
 		break;
 	}
-}
 
+	if(pixelArtActive){
+		secondRender();
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// PROGRAMA PRINCIPAL
@@ -239,6 +333,13 @@ void ResizeCallback(GLFWwindow* window, int width, int height)
 	glfwGetFramebufferSize(window, &width, &height); 
 	glViewport(0, 0, width, height);
 	ALTO = height;	ANCHO = width;
+
+	// Cambio de tamaño de la textura
+	glBindTexture(GL_TEXTURE_2D, secondRenderTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ANCHO, ALTO, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, secondRenderTexture, 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // Callback de pulsacion de tecla
@@ -279,8 +380,10 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_B: change_scene(BASE); break;
 			case GLFW_KEY_0: 
 				if(pixelArtActive){
+					pixelArtActive=false;
 					glDeleteTextures(1, &renderBuffer);
 				}else{
+					pixelArtActive=true;
 					glGenFramebuffers(1, &renderBuffer);
 				}
 				break;
