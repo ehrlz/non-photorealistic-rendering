@@ -3,7 +3,7 @@ in vec3 n;
 in vec3 v;
 in vec2 UV;
 
-out vec3 col;  // Color fragmento
+out vec3 col;  // Fragment colour
 
 uniform vec3 light; // normalized
 uniform sampler2D unit; // texture

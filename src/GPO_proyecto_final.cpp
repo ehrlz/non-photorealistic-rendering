@@ -251,9 +251,7 @@ void apply_options()
 
 	// OPTIONS
 	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){ // TODO
-		if(scene_flag != GOOCH){
-			transfer_int("render_texture", render_texture); // renderizar o no
-		}
+		transfer_int("render_texture", render_texture);
 		transfer_vec3("model_color", model_color); // selec color si no hay textura
 	} 
 }
@@ -339,14 +337,14 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_UP: rejilla.y+=0.1; break; // Aumento de longitud pixeles en y
 			case GLFW_KEY_DOWN: rejilla.y-=0.1; break; // Disminucion de longitud pixeles en y
 			case GLFW_KEY_LEFT: 
-				if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN){
+				if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
 					az -= LIGHT_MOVE_SCALE;
 				}else{ // Disminucion de longitud pixeles en x
 					rejilla.x-=0.1;
 				}
 				break;
 			case GLFW_KEY_RIGHT:
-				if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN){
+				if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
 					az += LIGHT_MOVE_SCALE;
 				}else{ // Aumento de longitud pixeles en x
 					rejilla.x+=0.1;
