@@ -35,6 +35,8 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
+int rotating = 1;
+
 // ----- SHADER PARAMS -----
 float az = 0.f, el = .75f; // Azimut, elevación
 
@@ -128,13 +130,23 @@ void init_scene()
 
 // float fov = 35.0f, aspect = 4.0f / 3.0f; //###float fov = 40.0f, aspect = 4.0f / 3.0f;
 
+float t;
+float last_t;
+
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
 void render_scene()
 {
 	glClearColor(0.1f,0.1f,0.1f,0.0f);  // Especifica color para el fondo (RGB+alfa)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);          // Aplica color asignado borrando el buffer
 
-	float t = (float)glfwGetTime();  // Contador de tiempo en segundos 
+	if(rotating) {  // stop rotation
+		t = (float)glfwGetTime();  // Contador de tiempo en segundos
+		last_t = t;
+	}
+	else {
+		t = last_t;
+	}
+	 	
 
 	///////// Aqui vendría nuestr código para actualizar escena  /////////	
 	mat4 M, T, R, S;
@@ -369,6 +381,10 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 				render_texture = ++render_texture % 2; 
 				printf("RENDER STATUS: %d\n", render_texture);
 				transfer_int("render_texture",render_texture);
+				break;
+			case GLFW_KEY_SPACE:
+				rotating = ++rotating % 2;
+				if(rotating) glfwSetTime((double)last_t); // set the time to the stop instant to continue
 				break;
 		}
 	}
