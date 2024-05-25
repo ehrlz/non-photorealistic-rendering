@@ -40,6 +40,9 @@ int rotating = 1;
 // ----- SHADER PARAMS -----
 float az = 0.f, el = .75f; // Azimut, elevación
 
+// phong and blinn
+vec4 light_coefs = vec4(.2f,.7f,.1f,1.f); // ilum coefs: 20% ambiental + 70% diffuse + 10% spec | spec aperture
+
 float toon_border = 0.2; // Toon shading
 int color_levels = 3;
 
@@ -214,6 +217,10 @@ void apply_options()
 		transfer_vec3("campos",pos_obs);
 	}
 
+	if(scene_flag == PHONG || scene_flag == BLINN){
+		transfer_vec4("coefs", light_coefs);
+	}
+
 	if(scene_flag == TOON){
 		transfer_float("toon_border", toon_border);
 		transfer_int("color_levels", color_levels);
@@ -270,7 +277,7 @@ int main(int argc, char* argv[])
 		render_scene();
 
 		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border,
-					&model_color, &b_lightness, &y_lightness, &alpha, &beta);
+					&model_color, &b_lightness, &y_lightness, &alpha, &beta, &light_coefs);
 
 		apply_options(); // aplica los casos de uso
 

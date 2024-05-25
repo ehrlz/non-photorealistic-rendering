@@ -9,8 +9,7 @@ uniform vec3 light; // normalized
 uniform sampler2D unit;
 uniform int render_texture = 1;
 uniform vec3 model_color;
-
-vec4 coef = vec4(.2f,.7f,.1f,1.f); // phong coef 20% ambiental + 70% diffuse + 10% spec.
+uniform vec4 coefs;
 
 void main()
 {
@@ -24,9 +23,9 @@ void main()
     vec3 h = normalize(light+view);
 
 	float spec_dot = max(dot(normal,h), 0);
-	float spec = pow(spec_dot,coef.w);
+	float spec = pow(spec_dot,coefs.w);
 
-	float ilu = coef.x + coef.y * diffuse + coef.z * spec;
+	float ilu = coefs.x + coefs.y * diffuse + coefs.z * spec;
 
 	if(render_texture == 1)
 		col = texture(unit, UV).rgb * ilu;
