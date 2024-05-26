@@ -89,7 +89,6 @@ extern int ANCHO;
 extern int ALTO;
 
 // Variables globales
-extern GLuint posRejilla; 
 extern vec3 rejilla; 
 extern bool sombra;
 
