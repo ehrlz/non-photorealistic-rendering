@@ -15,6 +15,8 @@ uniform float y_lightness;
 uniform float alpha;
 uniform float beta;
 
+float border = 0.15;
+
 // gooch
 vec3 blue = vec3(0,0,1);
 vec3 yellow = vec3(1,1,0);
@@ -23,15 +25,21 @@ void main()
 {
 	// Phong model
 	vec3 normal = normalize(n);
+    vec3 view = normalize(v);
 	float diffuse = dot(light, normal);
 
+    // siluette
+	float angle_view = dot(view,normal);
+	if (angle_view >= -border && angle_view <= border){
+		col = vec3(0,0,0);
+		return;
+	}
 
     vec3 render_color;
     if (render_texture == 1)
         render_color = texture(unit, UV).rgb;
     else
         render_color = model_color;
-
     vec3 coolColor = b_lightness * blue + alpha * render_color;
     vec3 warmColor = y_lightness * yellow + beta * render_color;
 

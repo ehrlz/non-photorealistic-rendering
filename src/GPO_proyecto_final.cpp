@@ -213,7 +213,7 @@ void apply_options()
 	// SHADER
 	glUseProgram(prog[scene_flag]);
 
-	if(scene_flag != PIXEL1 && scene_flag != PIXEL2 && scene_flag != GOOCH){
+	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
 		transfer_vec3("campos",pos_obs);
 	}
 
