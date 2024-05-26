@@ -26,7 +26,18 @@ add_subdirectory(libs/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(libs/glm )
 add_subdirectory(libs/glad)
 add_subdirectory(${ASSIMP_DIR})
-add_subdirectory(${CMAKE_SOURCE_DIR}/libs/imgui EXCLUDE_FROM_ALL)
+
+# Añade los archivos de ImGui al proyecto
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/libs/imgui)
+set(IMGUI_SOURCES
+    ${IMGUI_DIR}/imgui.cpp
+	${IMGUI_DIR}/imgui.h
+	${IMGUI_DIR}/imgui_draw.cpp
+	${IMGUI_DIR}/imgui_widgets.cpp
+	${IMGUI_DIR}/imgui_tables.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+)
 
 include_directories(libs/glad/include)
 include_directories(libs/glm)
@@ -41,11 +52,11 @@ set(GPO_SOURCE_FILES include/stb/stb_image.h
 					 src/GPO_proyecto_final.cpp
 					 src/GPO_aux.cpp
 					 src/GPO_gui.cpp)
-add_executable(gpo_proyecto_final ${GPO_SOURCE_FILES})
-target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface assimp imgui)
+add_executable(gpo_proyecto_final ${GPO_SOURCE_FILES} ${IMGUI_SOURCES})
+target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface assimp)
+target_include_directories(gpo_proyecto_final PRIVATE ${IMGUI_DIR} ${IMGUI_DIR}/backends)
 set_target_properties(gpo_proyecto_final
   PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
