@@ -84,4 +84,17 @@ void init_GLFW(void);
 void load_Opengl(void);
 GLFWwindow*  Init_Window(const char*);
 
+// Tamaño inicial ventana
+extern int ANCHO;
+extern int ALTO;
 
+// Second renderer
+
+void create_postprocess_screen(void);
+
+void compile_second_render_shaders(void);
+void initFrameBuffer(void);
+void render_to_texture(void);
+void post_process(void);
+void delete_second_render(void);
+void second_render_reshape(void);

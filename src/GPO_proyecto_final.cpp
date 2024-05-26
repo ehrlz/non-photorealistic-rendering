@@ -4,7 +4,7 @@ ATG, 2019
 
 #include <GpO.h>
 
-// TAMA�O y TITULO INICIAL de la VENTANA
+// TAMAÑO y TITULO INICIAL de la VENTANA
 int ANCHO = 800, ALTO = 600;  // Tama�o inicial ventana
 const char* prac = "Proyecto NPR";   // Nombre de la practica (aparecera en el titulo de la ventana).
 GLuint posRejilla;
@@ -18,13 +18,6 @@ vec3 rejilla=vec3(16, 16, 0);
 
 GLFWwindow* window;
 GLuint prog[3];
-GLuint progSecondRender;
-
-GLuint renderBuffer=0;
-GLuint secondRenderTexture;
-GLuint bufferProfundidad;
-GLuint texID;
-GLuint quad_vertexbuffer;
 
 objeto spider;
 GLuint textura_spider;
@@ -35,24 +28,12 @@ GLuint textura_helmet;
 char* vertex_prog;
 char* fragment_prog;
 
-char* vertex_progSecondRender;
-char* fragment_progSecondRender;
-
-static const GLfloat g_quad_vertex_buffer_data[] = {
-	-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-	-1.0f,  1.0f, 0.0f,
-	-1.0f,  1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-		1.0f,  1.0f, 0.0f,
-};
-
 int scene_flag = 0;
 int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
-bool pixelArtActive=false;
+bool pixelArtActive = false;
 enum SCENES {BASE, PIXEL, TOON};
 enum MODELS {SPIDER, BUDA, HELMET};
 
@@ -75,59 +56,8 @@ mat4 PP, VV; // matrices de proyeccion y perspectiva
 float az = 0.f, el = .75f; // Azimut, elevación
 vec3 L; // Vector de iluminación
 
-void initFrameBuffer(){
-	// Creación de framebuffer
-	glGenFramebuffers(1, &renderBuffer);
-	glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
-
-	// Creación de textura para almacenar el renderizado
-	glActiveTexture(GL_TEXTURE5);
-	glGenTextures(1, &secondRenderTexture);
-    glBindTexture(GL_TEXTURE_2D, secondRenderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ANCHO, ALTO, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	// Creación de renderbuffer para almacenar la profundidad y el stencil
-    glGenRenderbuffers(1, &bufferProfundidad);
-    glBindRenderbuffer(GL_RENDERBUFFER, bufferProfundidad);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, ANCHO, ALTO);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, bufferProfundidad);
-
-	// Asociamos la textura al framebuffer
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, secondRenderTexture, 0);
-
-	// Se añade a la lista de buffers a dibujar
-	GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-	glDrawBuffers(1, DrawBuffers);
-
-	// Comprobación de errores
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE){
-		fprintf(stderr, "ERROR::FRAMEBUFFER:: Framebuffer no esta completo!\n");
-		return;
-	}
-
-	vertex_progSecondRender = leer_codigo_de_fichero("../data/shaders/pixelArt.vs");
-	fragment_progSecondRender = leer_codigo_de_fichero("../data/shaders/pixelArt.fs");
-	progSecondRender = Compile_Link_Shaders(vertex_progSecondRender, fragment_progSecondRender);
-
-	GLuint quad_VertexArrayID;
-    glGenVertexArrays(1, &quad_VertexArrayID);
-    glBindVertexArray(quad_VertexArrayID); 
-
-    glGenBuffers(1, &quad_vertexbuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_quad_vertex_buffer_data), g_quad_vertex_buffer_data, GL_STATIC_DRAW);
-	texID =  glGetUniformLocation(progSecondRender, "secondRenderTexture");
-
-	// Vinclamos el framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER, 0); 
-}
-
-// Preparaci�n de los datos de los objetos a dibujar, envialarlos a la GPU
-// Compilaci�n programas a ejecutar en la tarjeta gr�fica:  vertex shader, fragment shaders
+// Preparación de los datos de los objetos a dibujar, envialarlos a la GPU
+// Compilación programas a ejecutar en la tarjeta gráfica:  vertex shader, fragment shaders
 // Opciones generales de render de OpenGL
 void init_scene()
 {
@@ -136,15 +66,15 @@ void init_scene()
     glViewport(0, 0, width, height); 
     
 	spider = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
-	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE0);
+	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE1);
 
 	buda = cargar_modelo("../data/buda_n.bix");
 
 	helmet = cargar_modelo_obj("../data/helmet.obj");
-	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE1);
+	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE2);
 
 
-	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //40� Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
+	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //25º Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
 	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up
 
 	// Mandar programas a GPU, compilar y crear programa en GPU
@@ -162,70 +92,47 @@ void init_scene()
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/toon.fs");
 	prog[2] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
+	// Inicializado de postprocesado
+	initFrameBuffer();
+	create_postprocess_screen();
+	compile_second_render_shaders();
+
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
 	change_scene(BASE);	// Indicamos que programa vamos a usar 
 
-	initFrameBuffer();
-
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // float fov = 35.0f, aspect = 4.0f / 3.0f; //###float fov = 40.0f, aspect = 4.0f / 3.0f;
 
-void secondRender() {
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glViewport(0, 0, ANCHO, ALTO);
-	// glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glUseProgram(progSecondRender);
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, secondRenderTexture);
-	transfer_int("unit", 5);
-
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, quad_vertexbuffer);
-	glVertexAttribPointer(
-		0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-		3,                  // size
-		GL_FLOAT,           // type
-		GL_FALSE,           // normalized?
-		0,                  // stride
-		(void*)0            // array buffer offset
-	);
-
-	// Draw the triangle !
-	glDrawArrays(GL_TRIANGLES, 0, 6); // From index 0 to 3 -> 1 triangle
-
-	glDisableVertexAttribArray(0);
-
-	glUseProgram(prog[scene_flag]);
-}
-
-
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
 void render_scene()
-{
-	glClearColor(0.0f,0.0f,0.0f,0.0f);  // Especifica color para el fondo (RGB+alfa)
+{	
+	if(pixelArtActive){
+		// printf("SCENE WITH POSTRENDER\n");
+		render_to_texture();
+	}
+
+	glClearColor(0.1f,0.1f,0.1f,1.0f);  // Especifica color para el fondo (RGB+alfa)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);          // Aplica color asignado borrando el buffer
+
+	if(pixelArtActive){
+		glEnable(GL_DEPTH_TEST);
+	}
 
 	float t = (float)glfwGetTime();  // Contador de tiempo en segundos 
 
 	///////// Aqui vendr�a nuestr c�digo para actualizar escena  /////////	
 	mat4 M, T, R, S;
 
-	if(pixelArtActive){
-		glBindFramebuffer(GL_FRAMEBUFFER, renderBuffer);
-	}
-
 	if(scene_flag == BASE || scene_flag == PIXEL){
 		R=rotate(t, vec3(0, 0, 1.f));  
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
-
 		transfer_mat4("MVP", PP*VV*M);
-		
 		if(scene_flag == PIXEL){
 			transfer_vec3("rejilla", rejilla);
 			transfer_vec2("resolucion", vec2(ANCHO, ALTO));
@@ -263,6 +170,7 @@ void render_scene()
 	switch (model_flag)
 	{
 		case SPIDER:
+		transfer_int("unit",1);
 		dibujar_indexado(spider);
 		break;
 		case BUDA:
@@ -274,7 +182,8 @@ void render_scene()
 	}
 
 	if(pixelArtActive){
-		secondRender();
+		post_process();
+		glUseProgram(prog[scene_flag]);
 	}
 }
 
@@ -296,7 +205,8 @@ int main(int argc, char* argv[])
 		glfwPollEvents();
 		show_info();
 	}
-
+	
+	delete_second_render(); // TODO delete objetos
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
 }
@@ -334,12 +244,7 @@ void ResizeCallback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 	ALTO = height;	ANCHO = width;
 
-	// Cambio de tamaño de la textura
-	glBindTexture(GL_TEXTURE_2D, secondRenderTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ANCHO, ALTO, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, secondRenderTexture, 0);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	second_render_reshape();
 }
 
 // Callback de pulsacion de tecla
@@ -381,10 +286,8 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_0: 
 				if(pixelArtActive){
 					pixelArtActive=false;
-					glDeleteTextures(1, &renderBuffer);
 				}else{
 					pixelArtActive=true;
-					glGenFramebuffers(1, &renderBuffer);
 				}
 				break;
 			

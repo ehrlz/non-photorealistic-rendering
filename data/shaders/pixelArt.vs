@@ -1,12 +1,11 @@
 #version 330 core
+in vec3 position;
+out vec2 uv;
 
-// Input vertex data, different for all executions of this shader.
-layout(location = 0) in vec3 vertexPosition_modelspace;
+uniform sampler2D bufferTexture;
 
-// Output data ; will be interpolated for each fragment.
-out vec2 UV;
-
-void main(){
-	gl_Position =  vec4(vertexPosition_modelspace,1);
-	UV = (vertexPosition_modelspace.xy+vec2(1,1))/2.0;
+void main()
+{
+	gl_Position = vec4(position, 1.0);
+	uv = position.xy * 0.5 + 0.5; // position sets the postrender uv
 }

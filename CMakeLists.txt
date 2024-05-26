@@ -37,7 +37,8 @@ include_directories(${ASSIMP_INCLUDE_DIRS})
 set(GPO_SOURCE_FILES include/stb/stb_image.h
 					 include/GpO.h
 					 src/GPO_proyecto_final.cpp
-					 src/GPO_aux.cpp)
+					 src/GPO_aux.cpp
+					 src/GPO_second_render.cpp)
 add_executable(gpo_proyecto_final ${GPO_SOURCE_FILES})
 target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface assimp)
 

@@ -1,8 +1,8 @@
 #version 330 core
-in vec2 UV;
-out vec3 outputColor;
-uniform sampler2D unit;
-void main(){
-	outputColor = texture(unit, UV).rgb;
-	// outputColor = vec3(1.f, 1.f, 1.f);
+in vec2 uv;
+uniform sampler2D bufferTexture;
+
+void main()
+{
+	gl_FragColor = vec4(1) - texture(bufferTexture, uv);
 }
