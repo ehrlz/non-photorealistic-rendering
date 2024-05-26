@@ -35,6 +35,7 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
+bool pixelArtActive = false;
 int rotating = 1;
 
 // ----- SHADER PARAMS -----
@@ -82,25 +83,23 @@ void init_scene()
     glViewport(0, 0, width, height); 
     
 	spider = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
-	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE0, false);
+	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE1, false);
 
 	ball = cargar_modelo_obj("../data/ball_fountain.obj");
 
 	helmet = cargar_modelo_obj("../data/helmet.obj");
-	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE1, true);
+	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE2, true);
 
 	cat = cargar_modelo_obj("../data/cat.obj");
-	textura_cat = cargar_textura("../data/cat.jpg", GL_TEXTURE2, true);
+	textura_cat = cargar_textura("../data/cat.jpg", GL_TEXTURE3, true);
 
 	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //25º Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
 	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up
 
 	// Compilado de Shaders
 	// Mandar programas a GPU, compilar y crear programa en GPU
-
-	// PIXEL 1
-	vertex_prog = leer_codigo_de_fichero("../data/shaders/pixel.vs");
-	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel1.fs");
+	vertex_prog = leer_codigo_de_fichero("../data/shaders/base.vs");
+	fragment_prog = leer_codigo_de_fichero("../data/shaders/base.fs");
 	prog[0] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
 	// PIXEL 2
@@ -124,11 +123,18 @@ void init_scene()
 	fragment_prog = leer_codigo_de_fichero("../data/shaders/gooch.fs");
 	prog[5] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
+	// Inicializado de postprocesado
+	initFrameBuffer();
+	create_postprocess_screen();
+	compile_second_render_shaders();
+
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
-	change_scene(PIXEL1);	// Indicamos que programa vamos a usar 
+	change_scene(BASE);	// Indicamos que programa vamos a usar 
 
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // float fov = 35.0f, aspect = 4.0f / 3.0f; //###float fov = 40.0f, aspect = 4.0f / 3.0f;
@@ -138,9 +144,18 @@ float last_t;
 
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
 void render_scene()
-{
-	glClearColor(0.1f,0.1f,0.1f,0.0f);  // Especifica color para el fondo (RGB+alfa)
+{	
+	if(pixelArtActive){
+		// printf("SCENE WITH POSTRENDER\n");
+		render_to_texture();
+	}
+
+	glClearColor(0.1f,0.1f,0.1f,1.0f);  // Especifica color para el fondo (RGB+alfa)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);          // Aplica color asignado borrando el buffer
+
+	if(pixelArtActive){
+		glEnable(GL_DEPTH_TEST);
+	}
 
 	if(rotating) {  // stop rotation
 		t = (float)glfwGetTime();  // Contador de tiempo en segundos
@@ -154,14 +169,16 @@ void render_scene()
 	///////// Aqui vendría nuestr código para actualizar escena  /////////	
 	mat4 M, T, R, S;
 
-	if(scene_flag == PIXEL1 || scene_flag == PIXEL2){
+	if(scene_flag == BASE || scene_flag == PIXEL){
 		R=rotate(t, vec3(0, 0, 1.f));  
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
-
 		transfer_mat4("MVP", PP*VV*M);
-		transfer_vec3("rejilla", rejilla);
-		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
+
+		if(scene_flag == PIXEL){
+			transfer_vec3("rejilla", rejilla);
+			transfer_vec2("resolucion", vec2(ANCHO, ALTO));
+		}
 	}
 	else {
 		if(model_flag == BALL){
@@ -193,6 +210,7 @@ void render_scene()
 	switch (model_flag)
 	{
 		case SPIDER:
+		transfer_int("unit",1);
 		dibujar_indexado(spider);
 		break;
 		case BALL:
@@ -213,7 +231,7 @@ void apply_options()
 	// SHADER
 	glUseProgram(prog[scene_flag]);
 
-	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
+	if(scene_flag != BASE && scene_flag != PIXEL){
 		transfer_vec3("campos",pos_obs);
 	}
 
@@ -240,17 +258,17 @@ void apply_options()
 		render_texture = 0; // ball doesn't have texture
 		break;
 	case HELMET:
-		if(scene_flag != PIXEL1 && scene_flag != PIXEL2)
+		if(scene_flag != BASE && scene_flag != PIXEL)
 			transfer_int("unit",1);
 		break;
 	case CAT:
-		if(scene_flag != PIXEL1 && scene_flag != PIXEL2)
+		if(scene_flag != BASE && scene_flag != PIXEL)
 			transfer_int("unit",2);
 		break;
 	}
 
 	// OPTIONS
-	if(scene_flag != PIXEL1 && scene_flag != PIXEL2){ // TODO
+	if(scene_flag != BASE && scene_flag != PIXEL){ // TODO
 		transfer_int("render_texture", render_texture);
 		transfer_vec3("model_color", model_color); // selec color si no hay textura
 	} 
@@ -283,8 +301,9 @@ int main(int argc, char* argv[])
 		glfwPollEvents();
 		show_info();
 	}
-
+	
 	terminateImGui();
+	delete_second_render(); // TODO delete objetos
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
 }
@@ -321,6 +340,8 @@ void ResizeCallback(GLFWwindow* window, int width, int height)
 	glfwGetFramebufferSize(window, &width, &height); 
 	glViewport(0, 0, width, height);
 	ALTO = height;	ANCHO = width;
+
+	second_render_reshape();
 }
 
 // Callback de pulsacion de tecla
@@ -337,14 +358,14 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_UP: rejilla.y+=0.1; break; // Aumento de longitud pixeles en y
 			case GLFW_KEY_DOWN: rejilla.y-=0.1; break; // Disminucion de longitud pixeles en y
 			case GLFW_KEY_LEFT: 
-				if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
+				if(scene_flag != BASE && scene_flag != PIXEL){
 					az -= LIGHT_MOVE_SCALE;
 				}else{ // Disminucion de longitud pixeles en x
 					rejilla.x-=0.1;
 				}
 				break;
 			case GLFW_KEY_RIGHT:
-				if(scene_flag != PIXEL1 && scene_flag != PIXEL2){
+				if(scene_flag != BASE && scene_flag != PIXEL){
 					az += LIGHT_MOVE_SCALE;
 				}else{ // Aumento de longitud pixeles en x
 					rejilla.x+=0.1;
@@ -356,11 +377,18 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_KP_SUBTRACT: rejilla.z-=0.1; break;
 
 			// Cambio de shader
-			case GLFW_KEY_0: change_scene(PIXEL1); break;
-			case GLFW_KEY_1: change_scene(PIXEL2); break;
+			case GLFW_KEY_1: change_scene(PIXEL); break;
 			case GLFW_KEY_2: change_scene(TOON); break;
 			case GLFW_KEY_3: change_scene(PHONG); break;
 			case GLFW_KEY_4: change_scene(BLINN); break;
+			case GLFW_KEY_B: change_scene(BASE); break;
+			case GLFW_KEY_0: 
+				if(pixelArtActive){
+					pixelArtActive=false;
+				}else{
+					pixelArtActive=true;
+				}
+				break;
 			
 			//Intercambio de sombreado
 			case GLFW_KEY_TAB:
@@ -381,7 +409,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_T:
 				// BALL_FOUNTAIN DOESN'T HAVE TEXTURE
 				// TODO: IMPLEMENT SWITCH PIXEL SHADER
-				if(model_flag == BALL || scene_flag == PIXEL1 || scene_flag == PIXEL2)
+				if(model_flag == BALL || scene_flag == BASE || scene_flag == PIXEL)
 					break;
 				render_texture = ++render_texture % 2; 
 				printf("RENDER STATUS: %d\n", render_texture);
@@ -405,7 +433,7 @@ void change_scene(int option){
 	switch (option)
 	{
 	case 0:
-		printf("Pixel shading 1\n");
+		printf("Base shading\n");
 		change_model(SPIDER);
 		break;
 	case 1:

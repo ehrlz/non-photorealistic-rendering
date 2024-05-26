@@ -32,9 +32,9 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     // First window: shader and model selector
     ImGui::Begin("Scenes", NULL, window_flags);
     ImGui::SeparatorText("Shaders");
-    ImGui::RadioButton("Pixel1", scene_flag, PIXEL1);
+    ImGui::RadioButton("Base", scene_flag, BASE);
     ImGui::SameLine();
-    ImGui::RadioButton("Pixel2", scene_flag, PIXEL2);
+    ImGui::RadioButton("Textura pixelada", scene_flag, PIXEL);
     if (*model_flag != SPIDER) // TODO delete spider model
     {
         ImGui::RadioButton("Toon", scene_flag, TOON);
@@ -59,7 +59,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 
     // Second window: Shader and texture options
     ImGui::Begin("Scene options", NULL, window_flags);
-    if (*scene_flag != PIXEL1 && *scene_flag != PIXEL2)
+    if (*scene_flag != BASE && *scene_flag != PIXEL)
     { // TODO PIXEL
         if (*render_texture == 0)
         { // color only can be defined with no texture

@@ -51,7 +51,8 @@ set(GPO_SOURCE_FILES include/stb/stb_image.h
 					 include/GpO.h
 					 src/GPO_proyecto_final.cpp
 					 src/GPO_aux.cpp
-					 src/GPO_gui.cpp)
+					 src/GPO_gui.cpp
+					 src/GPO_second_render.cpp)
 add_executable(gpo_proyecto_final ${GPO_SOURCE_FILES} ${IMGUI_SOURCES})
 target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface assimp)
 target_include_directories(gpo_proyecto_final PRIVATE ${IMGUI_DIR} ${IMGUI_DIR}/backends)

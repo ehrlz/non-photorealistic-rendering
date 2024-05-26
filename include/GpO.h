@@ -84,11 +84,26 @@ void init_GLFW(void);
 void load_Opengl(void);
 GLFWwindow*  Init_Window(const char*);
 
+// Tamaño inicial ventana
+extern int ANCHO;
+extern int ALTO;
+
+// Second renderer
+
+void create_postprocess_screen(void);
+
+void compile_second_render_shaders(void);
+void initFrameBuffer(void);
+void render_to_texture(void);
+void post_process(void);
+void delete_second_render(void);
+void second_render_reshape(void);void setupImGui(GLFWwindow* window);
+
 void setupImGui(GLFWwindow* window);
 void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border,
             vec3 *model_color, float *b_lightness, float *y_lightness, float *alpha, float *beta, vec4 *light_coefs);
 void terminateImGui(void);
 
 // CONTENT
-enum SCENES {PIXEL1, PIXEL2, TOON, PHONG, BLINN, GOOCH};
+enum SCENES {BASE, PIXEL, TOON, PHONG, BLINN, GOOCH};
 enum MODELS {SPIDER, BALL, HELMET, CAT};
