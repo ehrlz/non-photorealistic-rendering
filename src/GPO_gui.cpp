@@ -105,8 +105,8 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     }
 
     if(*scene_flag == PIXEL || *pixelArtActive){
-        ImGui::SliderFloat("Pixel size X", rejillaX, 1, 100, "ratio = %.1f");
-        ImGui::SliderFloat("Pixel size Y", rejillaY, 1, 100, "ratio = %.1f");
+        ImGui::SliderFloat("Pixel size X", rejillaX, 2, 100, "ratio = %.1f");
+        ImGui::SliderFloat("Pixel size Y", rejillaY, 2, 100, "ratio = %.1f");
         if(*pixelArtActive){
             ImGui::Checkbox("Sombra", sombra);
             if(*sombra){

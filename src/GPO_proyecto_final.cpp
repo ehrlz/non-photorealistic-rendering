@@ -8,7 +8,7 @@ Alonso García Elías Herrero, 2024
 int ANCHO = 1200, ALTO = 900;  // Tamaño inicial ventana
 const char* prac = "Proyecto NPR";   // Nombre de la practica (aparecera en el titulo de la ventana).
 GLuint posRejilla;
-vec3 rejilla=vec3(16.0f,16.0f,0.0f);
+vec3 rejilla=vec3(16.f,16.f,0.0f);
 bool sombra = false;
 
 // SHADERS EN FICHEROS
