@@ -110,5 +110,5 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 void terminateImGui(void);
 
 // CONTENT
-enum SCENES {BASE, PIXEL, TOON, PHONG, BLINN, GOOCH};
+enum SCENES {NONE, PIXEL, TOON, PHONG, BLINN, GOOCH};
 enum MODELS {SPIDER, BALL, HELMET, CAT};

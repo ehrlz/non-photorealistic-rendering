@@ -130,7 +130,7 @@ void init_scene()
 	compile_second_render_shaders();
 
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
-	change_scene(BASE);	// Indicamos que programa vamos a usar 
+	change_scene(NONE);	// Indicamos que programa vamos a usar 
 
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
@@ -170,48 +170,41 @@ void render_scene()
 	///////// Aqui vendría nuestr código para actualizar escena  /////////	
 	mat4 M, T, R, S;
 
-	if(scene_flag == BASE || scene_flag == PIXEL){
+	if(model_flag == SPIDER){
 		R=rotate(t, vec3(0, 0, 1.f));  
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
-		transfer_mat4("MVP", PP*VV*M);
-
-		if(scene_flag == PIXEL){
-			transfer_vec3("rejilla", rejilla);
-			transfer_vec2("resolucion", vec2(ANCHO, ALTO));
-		}
+	} else if(model_flag == BALL){
+		T=translate(vec3(0.f, 0.f, 0.5f));
+		S=scale(vec3(0.15f,0.15f,0.15f));
+		M = T * S;
+	}else if (model_flag == HELMET){
+		T=translate(vec3(0.f, 0.f, 0.5f));
+		R=rotate(t, vec3(0.f, 0.f, 1.f));
+		S=scale(vec3(0.1f,0.1f,0.1f));
+		M = T * R * S;
+	}else if (model_flag == CAT){
+		T=translate(vec3(0.f, 0.f, 0.f));
+		R=rotate(t, vec3(0.f, 0.f, 1.f));
+		S=scale(vec3(0.05f,0.05f,0.05f));
+		M = T * R * S;
 	}
-	else {
-		if(model_flag == BALL){
-			T=translate(vec3(0.f, 0.f, 0.5f));
-			S=scale(vec3(0.15f,0.15f,0.15f));
-			M = T * S;
-		}else if (model_flag == HELMET){
-			T=translate(vec3(0.f, 0.f, 0.5f));
-			R=rotate(t, vec3(0.f, 0.f, 1.f));
-			S=scale(vec3(0.1f,0.1f,0.1f));
-			M = T * R * S;
-		}else if (model_flag == CAT){
-			T=translate(vec3(0.f, 0.f, 0.f));
-			R=rotate(t, vec3(0.f, 0.f, 1.f));
-			S=scale(vec3(0.05f,0.05f,0.05f));
-			M = T * R * S;
-		}
 
+	if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN || scene_flag == GOOCH){
 		// Cálculo de la dirección de la luz
 		L = vec3(2*sqrt(2)*cos(az), 2*sqrt(2)*sin(az), 1) / 3.f; // normalizado
 		transfer_vec3("light", L);
-
-		// Se transfieren las matrices de modelado
-		transfer_mat4("PV",PP*VV);
-		transfer_mat4("M", M);
 	}
+
+	// Se transfieren las matrices de modelado, vista y proyección al shader
+	transfer_mat4("PV",PP*VV);
+	transfer_mat4("M", M);
 	
 	// DIBUJO DEL MODELO
 	switch (model_flag)
 	{
 		case SPIDER:
-		transfer_int("unit",1);
+		
 		dibujar_indexado(spider);
 		break;
 		case BALL:
@@ -236,7 +229,13 @@ void apply_options()
 	// SHADER
 	glUseProgram(prog[scene_flag]);
 
-	if(scene_flag != BASE && scene_flag != PIXEL){
+
+	if(scene_flag == PIXEL){
+		transfer_vec3("rejilla", rejilla);
+		transfer_vec2("resolucion", vec2(ANCHO, ALTO));
+	}
+
+	if(scene_flag != NONE && scene_flag != PIXEL){
 		transfer_vec3("campos",pos_obs);
 	}
 
@@ -258,25 +257,28 @@ void apply_options()
 	switch (model_flag)
 	{
 	case SPIDER:
+		transfer_int("unit",1);
 		break;
 	case BALL:
 		render_texture = 0; // ball doesn't have texture
 		break;
 	case HELMET:
-		if(scene_flag != BASE && scene_flag != PIXEL)
-			transfer_int("unit",1);
+		transfer_int("unit",2);
 		break;
 	case CAT:
-		if(scene_flag != BASE && scene_flag != PIXEL)
-			transfer_int("unit",2);
+		transfer_int("unit",3);
 		break;
 	}
 
-	// OPTIONS
-	if(scene_flag != BASE && scene_flag != PIXEL){ // TODO
+	// Texture Options
+	if(scene_flag != PIXEL) // Needs a texture to pixelate
+	{
 		transfer_int("render_texture", render_texture);
 		transfer_vec3("model_color", model_color); // selec color si no hay textura
-	} 
+	}
+
+	if(model_flag == BALL)
+		render_texture = 1; // Render texture by default
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -364,14 +366,14 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_UP: rejilla.y+=0.1; break; // Aumento de longitud pixeles en y
 			case GLFW_KEY_DOWN: rejilla.y-=0.1; break; // Disminucion de longitud pixeles en y
 			case GLFW_KEY_LEFT: 
-				if(scene_flag != BASE && scene_flag != PIXEL){
+				if(scene_flag != NONE && scene_flag != PIXEL){
 					az -= LIGHT_MOVE_SCALE;
 				}else{ // Disminucion de longitud pixeles en x
 					rejilla.x-=0.1;
 				}
 				break;
 			case GLFW_KEY_RIGHT:
-				if(scene_flag != BASE && scene_flag != PIXEL){
+				if(scene_flag != NONE && scene_flag != PIXEL){
 					az += LIGHT_MOVE_SCALE;
 				}else{ // Aumento de longitud pixeles en x
 					rejilla.x+=0.1;
@@ -387,7 +389,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_2: change_scene(TOON); break;
 			case GLFW_KEY_3: change_scene(PHONG); break;
 			case GLFW_KEY_4: change_scene(BLINN); break;
-			case GLFW_KEY_B: change_scene(BASE); break;
+			case GLFW_KEY_B: change_scene(NONE); break;
 			case GLFW_KEY_0: 
 				if(pixelArtActive){
 					pixelArtActive=false;
@@ -415,7 +417,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_T:
 				// BALL_FOUNTAIN DOESN'T HAVE TEXTURE
 				// TODO: IMPLEMENT SWITCH PIXEL SHADER
-				if(model_flag == BALL || scene_flag == BASE || scene_flag == PIXEL)
+				if(model_flag == BALL || scene_flag == NONE || scene_flag == PIXEL)
 					break;
 				render_texture = ++render_texture % 2; 
 				printf("RENDER STATUS: %d\n", render_texture);

@@ -33,27 +33,34 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     // First window: shader and model selector
     ImGui::Begin("Scenes", NULL, window_flags);
     ImGui::SeparatorText("Shaders");
-    ImGui::RadioButton("Base", scene_flag, BASE);
-    ImGui::SameLine();
-    ImGui::RadioButton("Textura pixelada", scene_flag, PIXEL);
-    ImGui::Checkbox("Pixel Art", pixelArtActive);
-    if (*model_flag != SPIDER) // TODO delete spider model
+    ImGui::RadioButton("None", scene_flag, NONE);
+    if (*model_flag != BALL)
+    {
+        ImGui::RadioButton("Texture Pixelation", scene_flag, PIXEL);
+    }
+
+    if (*model_flag != SPIDER) // SPIDER DOESN'T HAVE NORMALS
     {
         ImGui::RadioButton("Toon", scene_flag, TOON);
         ImGui::SameLine();
         ImGui::RadioButton("Phong", scene_flag, PHONG);
         ImGui::SameLine();
         ImGui::RadioButton("Blinn-Phong", scene_flag, BLINN);
+        ImGui::SameLine();
         ImGui::RadioButton("Gooch", scene_flag, GOOCH);
     }
 
     ImGui::SeparatorText("Models");
     ImGui::RadioButton("Spiderman", model_flag, SPIDER);
     ImGui::SameLine();
-    ImGui::RadioButton("Fountain-Ball", model_flag, BALL);
     ImGui::RadioButton("Helmet", model_flag, HELMET);
     ImGui::SameLine();
     ImGui::RadioButton("Cat", model_flag, CAT);
+    if (*scene_flag != PIXEL)
+    { // No texture models can't admit texture pixelation
+        ImGui::RadioButton("Fountain-Ball", model_flag, BALL);
+        ImGui::SameLine();
+    }
     ImGui::End();
 
     // Second window pos: top left corner
@@ -61,24 +68,28 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 
     // Second window: Shader and texture options
     ImGui::Begin("Scene options", NULL, window_flags);
-    if (*scene_flag != BASE && *scene_flag != PIXEL)
-    { // TODO PIXEL
-        if (*render_texture == 0)
-        { // color only can be defined with no texture
-            float col[3] = {model_color->x, model_color->y, model_color->z};
-            ImGui::ColorPicker3("Model color", col, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
-            ImGui::ColorEdit3("Model color", col);
-            model_color->x = col[0];
-            model_color->y = col[1];
-            model_color->z = col[2];
-        }
-        if (*model_flag != BALL)
-        {
-            ImGui::Checkbox("Render textures", (bool *)render_texture); // Fountain ball doesn't have texture
-        }
+    if (*render_texture == 0)
+    { // color only can be defined with no texture
+        float col[3] = {model_color->x, model_color->y, model_color->z};
+        ImGui::ColorPicker3("Model color", col, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
+        ImGui::ColorEdit3("Model color", col);
+        model_color->x = col[0];
+        model_color->y = col[1];
+        model_color->z = col[2];
+    }
+    if (*model_flag != BALL) // This models don't have texture
+    {
+        ImGui::Checkbox("Render textures", (bool *)render_texture);
     }
 
     ImGui::SeparatorText("Shader params");
+
+    if (*scene_flag == PIXEL)
+    {
+        ImGui::SliderFloat("Pixel size X", rejillaX, 2, 100, "ratio = %.1f");
+        ImGui::SliderFloat("Pixel size Y", rejillaY, 2, 100, "ratio = %.1f");
+    }
+
     // PHONG AND BLINN COEFS
     if (*scene_flag == PHONG || *scene_flag == BLINN)
     {
@@ -94,7 +105,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         ImGui::SliderFloat("Border", toon_border, 0.0f, 0.5f, "ratio = %.05f");
         ImGui::SliderInt("Color levels", color_levels, 3, 7);
     }
-    
+
     // GOOCH PARAMS
     if (*scene_flag == GOOCH)
     {
@@ -104,12 +115,17 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         ImGui::SliderFloat("Beta", beta, 0.0f, 1.f, "ratio = %.05f");
     }
 
-    if(*scene_flag == PIXEL || *pixelArtActive){
+    ImGui::SeparatorText("Postprocess params");
+    ImGui::Checkbox("Pixel Art", pixelArtActive);
+    if (*pixelArtActive)
+    {
         ImGui::SliderFloat("Pixel size X", rejillaX, 2, 100, "ratio = %.1f");
         ImGui::SliderFloat("Pixel size Y", rejillaY, 2, 100, "ratio = %.1f");
-        if(*pixelArtActive){
+        if (*pixelArtActive)
+        {
             ImGui::Checkbox("Sombra", sombra);
-            if(*sombra){
+            if (*sombra)
+            {
                 ImGui::SliderFloat("Sombra pixel", rejillaZ, 0, 16, "ratio = %.1f");
             }
         }
