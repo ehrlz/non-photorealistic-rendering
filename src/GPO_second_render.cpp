@@ -114,6 +114,8 @@ void post_process()
     glActiveTexture(GL_TEXTURE0);
 
     transfer_int("bufferTexture", 0);
+    transfer_vec3("rejilla", vec3(rejilla.x, rejilla.y, sombra ? rejilla.z : 0));
+    transfer_vec2("resolucion", vec2(ANCHO, ALTO));
 
     glBindVertexArray(rectVAO);
     glBindTexture(GL_TEXTURE_2D, tex_color_buffer);

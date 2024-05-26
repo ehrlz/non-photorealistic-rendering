@@ -88,6 +88,11 @@ GLFWwindow*  Init_Window(const char*);
 extern int ANCHO;
 extern int ALTO;
 
+// Variables globales
+extern GLuint posRejilla; 
+extern vec3 rejilla; 
+extern bool sombra;
+
 // Second renderer
 
 void create_postprocess_screen(void);
@@ -100,8 +105,9 @@ void delete_second_render(void);
 void second_render_reshape(void);void setupImGui(GLFWwindow* window);
 
 void setupImGui(GLFWwindow* window);
-void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border,
-            vec3 *model_color, float *b_lightness, float *y_lightness, float *alpha, float *beta, vec4 *light_coefs);
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border, bool *pixelArtActive,
+            vec3 *model_color, float *b_lightness, float *y_lightness, float *alpha, float *beta, vec4 *light_coefs,
+            float *rejillaX, float *rejillaY, float *rejillaZ, bool *sombra);
 void terminateImGui(void);
 
 // CONTENT

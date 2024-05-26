@@ -8,7 +8,8 @@ Alonso García Elías Herrero, 2024
 int ANCHO = 1200, ALTO = 900;  // Tamaño inicial ventana
 const char* prac = "Proyecto NPR";   // Nombre de la practica (aparecera en el titulo de la ventana).
 GLuint posRejilla;
-vec3 rejilla=vec3(16, 16, 0);
+vec3 rejilla=vec3(16.0f,16.0f,0.0f);
+bool sombra = false;
 
 // SHADERS EN FICHEROS
 
@@ -223,6 +224,10 @@ void render_scene()
 		dibujar_indexado(cat);
 		break;
 	}
+
+	if(pixelArtActive){
+		post_process();
+	}
 }
 
 
@@ -292,8 +297,9 @@ int main(int argc, char* argv[])
 	{
 		render_scene();
 
-		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border,
-					&model_color, &b_lightness, &y_lightness, &alpha, &beta, &light_coefs);
+		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border, &pixelArtActive,
+					&model_color, &b_lightness, &y_lightness, &alpha, &beta, &light_coefs,
+					&rejilla.x, &rejilla.y, &rejilla.z, &sombra);
 
 		apply_options(); // aplica los casos de uso
 

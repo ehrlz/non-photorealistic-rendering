@@ -16,8 +16,9 @@ void setupImGui(GLFWwindow *window)
     ImGui_ImplOpenGL3_Init("#version 130");
 }
 
-void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border,
-                 vec3 *model_color, float *b_lightness, float *y_lightness, float *alpha, float *beta, vec4 *light_coefs)
+void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *color_levels, float *toon_border, bool *pixelArtActive,
+                 vec3 *model_color, float *b_lightness, float *y_lightness, float *alpha, float *beta, vec4 *light_coefs,
+                 float *rejillaX, float *rejillaY, float *rejillaZ, bool *sombra)
 {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -35,6 +36,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     ImGui::RadioButton("Base", scene_flag, BASE);
     ImGui::SameLine();
     ImGui::RadioButton("Textura pixelada", scene_flag, PIXEL);
+    ImGui::Checkbox("Pixel Art", pixelArtActive);
     if (*model_flag != SPIDER) // TODO delete spider model
     {
         ImGui::RadioButton("Toon", scene_flag, TOON);
@@ -100,6 +102,17 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         ImGui::SliderFloat("Y_lightness", y_lightness, 0.0f, 1.f, "ratio = %.05f");
         ImGui::SliderFloat("Alpha", alpha, 0.0f, 1.f, "ratio = %.05f");
         ImGui::SliderFloat("Beta", beta, 0.0f, 1.f, "ratio = %.05f");
+    }
+
+    if(*scene_flag == PIXEL || *pixelArtActive){
+        ImGui::SliderFloat("Pixel size X", rejillaX, 1, 100, "ratio = %.1f");
+        ImGui::SliderFloat("Pixel size Y", rejillaY, 1, 100, "ratio = %.1f");
+        if(*pixelArtActive){
+            ImGui::Checkbox("Sombra", sombra);
+            if(*sombra){
+                ImGui::SliderFloat("Sombra pixel", rejillaZ, 0, 16, "ratio = %.1f");
+            }
+        }
     }
     ImGui::End();
 
