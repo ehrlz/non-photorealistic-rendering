@@ -18,6 +18,8 @@ sudo snap install cmake --classic
 1. Una vez descomprimido el zip y acceder mediante el terminal al directorio build.
 En entornos Linux con GCC/G++ instalado ejecutar
 
+**Compruebe que todos los submodulos estan actualizados y tienen contenido**, en caso contrario ejecute: revierta los cambios en el submodulo vacio y vuelva a ejecutar el siguiente comando.
+
 ```bash
 cmake .. -DOpenGL_GL_PREFERENCE=GLVND
 make -j4
