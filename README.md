@@ -1,43 +1,60 @@
 # non-photorealistic-rendering
-## Requisitos previos
-Debe estar instalado en el sistema: 
-1. Los drivers con aceleración 3d del fabricante con soporte para OpenGL
-2. Un entornos de programación para lenguaje C/C++. En linux con tener el GCC y G++ podría ser suficiente. 
-Se pueden utilizar entornos como VScode o CLion. 
-En Windows se aconseja Visual Studio 2019/2022 y en Mac el XCode. Otros compiladores como el MinGW tamibén podrian funcionar.
-3. CMake instalado y accesible desde el terminal o consola de comandos (v 3.20 o más):
 
-### Instalación en Ubuntu
+
+![OpenGL](https://img.shields.io/badge/OpenGL-%23FFFFFF.svg?style=for-the-badge&logo=opengl)
+![C++](https://img.shields.io/badge/c++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Contenido
+1. [Installation](#Instalación)
+1. [Shaders](#Shaders)
+
+
+## How to use
+
+To run this application you'll need [Git](https://git-scm.com) and CMake (>=3.20):
 ```bash
-sudo snap install cmake --classic
-```
+# Clone this repo
+git clone --recurse-submodules git@github.com:ehrlz/non-photorealistic-rendering.git
 
-> `apt-get` proporciona una versión no compatible con la librería assimp.
+# Go into the repo
+cd non-photorealistic-rendering/build
 
-## Puesta en funcionamiento del proyecto
-1. Una vez descomprimido el zip y acceder mediante el terminal al directorio build.
-En entornos Linux con GCC/G++ instalado ejecutar
-
-**Compruebe que todos los submodulos estan actualizados y tienen contenido**, en caso contrario ejecute: revierta los cambios en el submodulo vacio y vuelva a ejecutar el siguiente comando.
-
-```bash
+# Compile the project
 cmake .. -DOpenGL_GL_PREFERENCE=GLVND
 make -j4
+
+# Run the app
+./bin/gpo_proyecto_final
 ```
+> [!TIP]
+> Ubuntu 20.04 CMake 3.2 version: `sudo snap install cmake --classic`
 
-3. En entornos windows con visual studio 2019/2022
-Abrir diréctamente el fichero de solución de VS
-Darle a compilar
+> [!WARNING]
+> `--recurse-submodules` flag is needed for `imgui` external 
 
-##  Ejecución
-En el directio /build/bin se habrán generado los binarios correspondientes al proyecto
-En general los podeis lanzar desde dentro de vuestro entornio de programacion (Eg CLion, Visual Studio, XCode etc.)
-También se pueden lanzar haciendo doble click sobre cada binario
 
-## Notas finales
-En el zip hay un total de 4 prácticas y un proyecto final.
-Cada uan de las prácticas esta estructurada con un fichero basico y otro pensado para que hagáis las pruebas y las respectivas entregas
-El fichero básico en cada una de las prácticas esta nombrado como GpO_01.cpp, GpO_02.cpp etc.
-El fichero de entrega, que es una copia del fichero básico en el que se realizarán los ejercicios, está nombreado como GpO_0X_entrega.cpp
-Esto nos permitirá dejar intacto el fichero original y hacer los ejercicios en el fichero de entrega.
-Todos los ejercicios parten del mismo código que el de la práctica 01, pero en cada laboratorio se actualizarán, simplemente hay que sobreescribir los ficheros correspondientes y volver a compilar.
+## Shaders
+### Phong
+
+Basic local ilumination shader.
+
+### Blinn-Phong
+
+Modification to the previous shader. Obtains an aproximation with less calculations.
+
+### Toon shading (cell shading)
+
+Combination of an ilumination shader (blinn in this case), color discretization and silhoutte rendering.
+
+### Gooch shading
+
+2 colors in conjunction with the original model color. Warm color (such as yellow) and cool color (blue). The warm color indicates that are facing toward the light source while the cool color indicates surfaces facing away.
+
+### Pixel shading
+
+Postprocessing effect that discretizates the render in pixels with customizable size.
+
+## Credits
+This software uses [imgui](https://github.com/ocornut/imgui) to handle user interactions with the scenes params.
