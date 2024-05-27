@@ -1,4 +1,4 @@
-    #include <GpO.h>
+#include <GpO.h>
 
 GLuint frame_buffer;
 GLuint tex_color_buffer;
@@ -21,7 +21,7 @@ static const float fbo_vertices[] = {
     1.f, -1.f, 0.f,    1.f, 0.0f, // Bottom-right
 };
 
-void compile_second_render_shaders()
+void compile_postprocessing_shaders()
 {
     vertex_prog_second_render = leer_codigo_de_fichero("../data/shaders/pixelArt.vs");
     fragment_prog_second_render = leer_codigo_de_fichero("../data/shaders/pixelArt.fs");

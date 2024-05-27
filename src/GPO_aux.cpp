@@ -7,14 +7,9 @@
 //####include <stb\stb_image.h>
 #include <stb_image.h>
 
-// ASSIMP lib impl
 #include <vector>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <iostream>
 
-// Custom reader
+// Custom obj loader
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -426,122 +421,122 @@ objeto cargar_modelo(char* fichero)
 }
 
 // ASSIMP
-objeto cargar_modelo_obj(const char* fichero) {
-    objeto obj;
-    GLuint VAO;
-    GLuint buffer, i_buffer;
+// objeto cargar_modelo_obj(const char* fichero) {
+//     objeto obj;
+//     GLuint VAO;
+//     GLuint buffer, i_buffer;
 
-    GLuint N_vertices, N_caras, N_indices;
+//     GLuint N_vertices, N_caras, N_indices;
 
-    unsigned char* vertex_data;
-    unsigned char* indices;
+//     unsigned char* vertex_data;
+//     unsigned char* indices;
 
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(fichero, aiProcess_Triangulate | aiProcess_FlipUVs);
+//     Assimp::Importer importer;
+//     const aiScene* scene = importer.ReadFile(fichero, aiProcess_Triangulate | aiProcess_FlipUVs);
     
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "Error al leer datos. Existe el fichero " << fichero << "?\n";
-        obj.VAO = 0;
-        obj.Ni = 0;
-        obj.tipo_indice = 0;
-        glfwTerminate();
-        return obj;
-    }
+//     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+//         std::cerr << "Error al leer datos. Existe el fichero " << fichero << "?\n";
+//         obj.VAO = 0;
+//         obj.Ni = 0;
+//         obj.tipo_indice = 0;
+//         glfwTerminate();
+//         return obj;
+//     }
 
-    aiMesh* mesh = scene->mMeshes[0]; // Suponiendo que solo hay un mesh en el archivo OBJ
+//     aiMesh* mesh = scene->mMeshes[0]; // Suponiendo que solo hay un mesh en el archivo OBJ
 
-    N_vertices = mesh->mNumVertices;
-    N_caras = mesh->mNumFaces;
-    N_indices = N_caras * 3;
+//     N_vertices = mesh->mNumVertices;
+//     N_caras = mesh->mNumFaces;
+//     N_indices = N_caras * 3;
 
-	printf("Leyendo modelo de %s: \n",fichero);
-	printf("%d vertices, %d triangulos. Lista de %d indices\n",N_vertices,N_caras,N_indices);
-	// printf("%d vertices, %d triangulos\n",N_vertices,N_caras);
-	//printf("Indices guardados en enteros de %d bytes\n",s_index);
-	//printf("%d datos por vertice\n",datos_per_vertex);
+// 	printf("Leyendo modelo de %s: \n",fichero);
+// 	printf("%d vertices, %d triangulos. Lista de %d indices\n",N_vertices,N_caras,N_indices);
+// 	// printf("%d vertices, %d triangulos\n",N_vertices,N_caras);
+// 	//printf("Indices guardados en enteros de %d bytes\n",s_index);
+// 	//printf("%d datos por vertice\n",datos_per_vertex);
 
-    GLuint tipo = GL_UNSIGNED_INT;
-    unsigned char s_index = 4;
-    if (N_vertices <= 65536) {
-        tipo = GL_UNSIGNED_SHORT;
-        s_index = 2;
-    }
-    if (N_vertices <= 256) {
-        tipo = GL_UNSIGNED_BYTE;
-        s_index = 1;
-    }
+//     GLuint tipo = GL_UNSIGNED_INT;
+//     unsigned char s_index = 4;
+//     if (N_vertices <= 65536) {
+//         tipo = GL_UNSIGNED_SHORT;
+//         s_index = 2;
+//     }
+//     if (N_vertices <= 256) {
+//         tipo = GL_UNSIGNED_BYTE;
+//         s_index = 1;
+//     }
 
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices_vec;
+//     std::vector<float> vertices;
+//     std::vector<unsigned int> indices_vec;
 
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        vertices.push_back(mesh->mVertices[i].x);
-        vertices.push_back(mesh->mVertices[i].y);
-        vertices.push_back(mesh->mVertices[i].z);
+//     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+//         vertices.push_back(mesh->mVertices[i].x);
+//         vertices.push_back(mesh->mVertices[i].y);
+//         vertices.push_back(mesh->mVertices[i].z);
 
-        if (mesh->HasNormals()) {
-            vertices.push_back(mesh->mNormals[i].x);
-            vertices.push_back(mesh->mNormals[i].y);
-            vertices.push_back(mesh->mNormals[i].z);
-        } else{
-			vertices.push_back(0.0f);
-            vertices.push_back(0.0f);
-            vertices.push_back(0.0f);
-		}
+//         if (mesh->HasNormals()) {
+//             vertices.push_back(mesh->mNormals[i].x);
+//             vertices.push_back(mesh->mNormals[i].y);
+//             vertices.push_back(mesh->mNormals[i].z);
+//         } else{
+// 			vertices.push_back(0.0f);
+//             vertices.push_back(0.0f);
+//             vertices.push_back(0.0f);
+// 		}
 
-        if (mesh->mTextureCoords[0]) {
-            vertices.push_back(mesh->mTextureCoords[0][i].x);
-            vertices.push_back(mesh->mTextureCoords[0][i].y);
-        } else {
-            vertices.push_back(0.0f);
-            vertices.push_back(0.0f);
-        }
-    }
+//         if (mesh->mTextureCoords[0]) {
+//             vertices.push_back(mesh->mTextureCoords[0][i].x);
+//             vertices.push_back(mesh->mTextureCoords[0][i].y);
+//         } else {
+//             vertices.push_back(0.0f);
+//             vertices.push_back(0.0f);
+//         }
+//     }
 
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-        aiFace face = mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++) {
-            indices_vec.push_back(face.mIndices[j]);
-        }
-    }
+//     for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+//         aiFace face = mesh->mFaces[i];
+//         for (unsigned int j = 0; j < face.mNumIndices; j++) {
+//             indices_vec.push_back(face.mIndices[j]);
+//         }
+//     }
 
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
+//     glGenVertexArrays(1, &VAO);
+//     glBindVertexArray(VAO);
 
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+//     glGenBuffers(1, &buffer);
+//     glBindBuffer(GL_ARRAY_BUFFER, buffer);
+//     glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
 
-    // Defino 1er argumento (atributo 0) del vertex shader (siempre XYZ)
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+//     // Defino 1er argumento (atributo 0) del vertex shader (siempre XYZ)
+//     glEnableVertexAttribArray(0);
+//     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
 
-	// 2o argumento (atributo 1) del vertex shader (uv)
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+// 	// 2o argumento (atributo 1) del vertex shader (uv)
+//     glEnableVertexAttribArray(1);
+//     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
 
-	// 3er argumento (atributo 2) del vertex shader (nx,ny,nz)
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+// 	// 3er argumento (atributo 2) del vertex shader (nx,ny,nz)
+//     glEnableVertexAttribArray(2);
+//     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);  // Asignados atributos, podemos desconectar BUFFER
+//     glBindBuffer(GL_ARRAY_BUFFER, 0);  // Asignados atributos, podemos desconectar BUFFER
 
-    glGenBuffers(1, &i_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_vec.size() * s_index, indices_vec.data(), GL_STATIC_DRAW);
+//     glGenBuffers(1, &i_buffer);
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer);
+//     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_vec.size() * s_index, indices_vec.data(), GL_STATIC_DRAW);
 
-    glBindVertexArray(0);  // Cierre vertex array
+//     glBindVertexArray(0);  // Cierre vertex array
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+//     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    obj.VAO = VAO;
-    obj.Ni = N_indices;
-    obj.Nv = N_vertices;
-    obj.Nt = N_caras;
-    obj.tipo_indice = tipo;
+//     obj.VAO = VAO;
+//     obj.Ni = N_indices;
+//     obj.Nv = N_vertices;
+//     obj.Nt = N_caras;
+//     obj.tipo_indice = tipo;
 
-    return obj;
-}
+//     return obj;
+// }
 
 struct Vertex {
     glm::vec3 position;

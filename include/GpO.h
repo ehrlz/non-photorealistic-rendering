@@ -96,7 +96,7 @@ extern bool sombra;
 
 void create_postprocess_screen(void);
 
-void compile_second_render_shaders(void);
+void compile_postprocessing_shaders(void);
 void initFrameBuffer(void);
 void render_to_texture(void);
 void post_process(void);

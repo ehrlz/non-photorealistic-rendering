@@ -129,7 +129,7 @@ void init_scene()
 	// Inicializado de postprocesado
 	initFrameBuffer();
 	create_postprocess_screen();
-	compile_second_render_shaders();
+	compile_postprocessing_shaders();
 
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
 	change_scene(NONE);	// Indicamos que programa vamos a usar 
