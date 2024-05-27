@@ -55,9 +55,9 @@ char* leer_codigo_de_fichero(const char*);
 
 
 GLuint cargar_cube_map(const char *, GLuint);
-GLuint cargar_textura(const char *,GLuint, bool);
-objeto cargar_modelo(char*);
-objeto cargar_modelo_obj(const char*);
+GLuint cargar_textura(const char *,GLuint);
+objeto cargar_modelo(const char*);
+bool load_obj(const char* path, objeto& obj);
 
 void transfer_mat4(const char*, mat4);
 void transfer_mat3(const char*, mat3);
@@ -92,11 +92,10 @@ extern int ALTO;
 extern vec3 rejilla; 
 extern bool sombra;
 
-// Second renderer
-
+// Postprocessing
 void create_postprocess_screen(void);
 
-void compile_second_render_shaders(void);
+void compile_postprocessing_shaders(void);
 void initFrameBuffer(void);
 void render_to_texture(void);
 void post_process(void);
@@ -110,5 +109,6 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 void terminateImGui(void);
 
 // CONTENT
-enum SCENES {BASE, PIXEL, TOON, PHONG, BLINN, GOOCH};
-enum MODELS {SPIDER, BALL, HELMET, CAT};
+enum SCENES {NONE, PIXEL, TOON, PHONG, BLINN, GOOCH};
+enum MODELS {SPIDER, HALO, HELMET, CAT, JEEP, FOUNTAIN_BALL, SUZANNE};
+

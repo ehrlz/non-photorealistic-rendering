@@ -7,7 +7,6 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC ")
-set(ASSIMP_DIR ${CMAKE_SOURCE_DIR}/libs/assimp)
 
 if( "${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}" )
  message( FATAL "no in source building allowed." )
@@ -25,7 +24,6 @@ find_package(OpenGL REQUIRED)
 add_subdirectory(libs/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(libs/glm )
 add_subdirectory(libs/glad)
-add_subdirectory(${ASSIMP_DIR})
 
 # Añade los archivos de ImGui al proyecto
 set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/libs/imgui)
@@ -41,7 +39,6 @@ set(IMGUI_SOURCES
 
 include_directories(libs/glad/include)
 include_directories(libs/glm)
-include_directories(${ASSIMP_DIR}/include)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/include/KHR)
@@ -52,10 +49,11 @@ set(GPO_SOURCE_FILES include/stb/stb_image.h
 					 src/GPO_proyecto_final.cpp
 					 src/GPO_aux.cpp
 					 src/GPO_gui.cpp
-					 src/GPO_second_render.cpp)
+					 src/GPO_postprocessing.cpp)
 add_executable(gpo_proyecto_final ${GPO_SOURCE_FILES} ${IMGUI_SOURCES})
-target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface assimp)
+target_link_libraries(gpo_proyecto_final PRIVATE ${OPENGL_LIBRARIES} glfw glm glad_interface)
 target_include_directories(gpo_proyecto_final PRIVATE ${IMGUI_DIR} ${IMGUI_DIR}/backends)
+
 set_target_properties(gpo_proyecto_final
   PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)

@@ -7,13 +7,13 @@
 //####include <stb\stb_image.h>
 #include <stb_image.h>
 
-// ASSIMP lib impl
 #include <vector>
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <iostream>
 
+// Custom obj loader
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
 ////////////////////   
 
 extern int ANCHO, ALTO;
@@ -81,7 +81,7 @@ char* leer_codigo_de_fichero(const char* fich)
 	fopen_s(&fid, fich, "rb");  if (fid == NULL) return NULL;
 
 	fseek(fid, 0, SEEK_END);  long nbytes = ftell(fid);
-	fprintf(stdout, "Leyendo codigo de %s (%d bytes)\n", fich, nbytes);
+	fprintf(stdout, "Leyendo codigo de %s (%ld bytes)\n", fich, nbytes);
 
 	char* buf = new char[nbytes + 1];
 	fseek(fid, 0, SEEK_SET);
@@ -183,9 +183,9 @@ GLuint Compile_Link_Shaders(const char* vertexShader_source,const char*fragmentS
 //////////////////  AUXILIARES 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GLuint cargar_textura(const char * imagepath, GLuint tex_unit, bool obj)
+GLuint cargar_textura(const char * imagepath, GLuint tex_unit)
 {
-  stbi_set_flip_vertically_on_load(!obj);
+  stbi_set_flip_vertically_on_load(true);
 
   int width, height,nrChannels;
   unsigned char* data = stbi_load(imagepath, &width, &height,&nrChannels,0);
@@ -297,7 +297,7 @@ GLuint cargar_cube_map(const char * imagepath, GLuint tex_unit)
 }
 
 
-objeto cargar_modelo(char* fichero)
+objeto cargar_modelo(const char* fichero)
 {
 	objeto obj;
 	GLuint VAO;
@@ -420,124 +420,147 @@ objeto cargar_modelo(char* fichero)
 
 }
 
-objeto cargar_modelo_obj(const char* fichero) {
-    objeto obj;
-    GLuint VAO;
-    GLuint buffer, i_buffer;
+struct Vertex {
+    glm::vec3 position;
+    glm::vec2 texCoords;
+    glm::vec3 normal;
+};
 
-    GLuint N_vertices, N_caras, N_indices;
-
-    unsigned char* vertex_data;
-    unsigned char* indices;
-
-    Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(fichero, aiProcess_Triangulate | aiProcess_FlipUVs);
-    
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-        std::cerr << "Error al leer datos. Existe el fichero " << fichero << "?\n";
-        obj.VAO = 0;
-        obj.Ni = 0;
-        obj.tipo_indice = 0;
-        glfwTerminate();
-        return obj;
+bool LoadObj(const std::string& path, std::vector<Vertex>& vertices, std::vector<unsigned int>& indices) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << path << std::endl;
+        return false;
     }
 
-    aiMesh* mesh = scene->mMeshes[0]; // Suponiendo que solo hay un mesh en el archivo OBJ
+    std::vector<glm::vec3> temp_positions;
+    std::vector<glm::vec2> temp_texCoords;
+    std::vector<glm::vec3> temp_normals;
 
-    N_vertices = mesh->mNumVertices;
-    N_caras = mesh->mNumFaces;
-    N_indices = N_caras * 3;
+	float extra_texCoord;
 
-	printf("Leyendo modelo de %s: \n",fichero);
-	printf("%d vertices, %d triangulos. Lista de %d indices\n",N_vertices,N_caras,N_indices);
-	// printf("%d vertices, %d triangulos\n",N_vertices,N_caras);
-	//printf("Indices guardados en enteros de %d bytes\n",s_index);
-	//printf("%d datos por vertice\n",datos_per_vertex);
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream s(line);
+        std::string type;
+        s >> type;
 
-    GLuint tipo = GL_UNSIGNED_INT;
-    unsigned char s_index = 4;
-    if (N_vertices <= 65536) {
-        tipo = GL_UNSIGNED_SHORT;
-        s_index = 2;
-    }
-    if (N_vertices <= 256) {
-        tipo = GL_UNSIGNED_BYTE;
-        s_index = 1;
-    }
+        if (type == "v") {
+            glm::vec3 position;
+            s >> position.x >> position.y >> position.z;
+			// std::cout << "Position: "<< position.x << " " << position.y << " " << position.z << std::endl;
+            temp_positions.push_back(position);
+        } else if (type == "vt") {
+            glm::vec2 texCoord;
+			if(!(s >> texCoord.x >> texCoord.y >> extra_texCoord)){
+				s >> texCoord.x >> texCoord.y;
+			}
+			// std::cout << "UV: " << texCoord.x << " " << texCoord.y << std::endl;
+            temp_texCoords.push_back(texCoord);
+        } else if (type == "vn") {
+            glm::vec3 normal;
+            s >> normal.x >> normal.y >> normal.z;
+			// std::cout << "Normal: "<< normal.x << " " <<  normal.y << " " << normal.z << std::endl;
+            temp_normals.push_back(normal);
+        } else if (type == "f") {
+            std::string v1, v2, v3, v4;
+            unsigned int vIndex[4], tIndex[4], nIndex[4];
+            char slash;
 
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices_vec;
+			s >> v1 >> v2 >> v3 >> v4;
 
-    for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-        vertices.push_back(mesh->mVertices[i].x);
-        vertices.push_back(mesh->mVertices[i].y);
-        vertices.push_back(mesh->mVertices[i].z);
+            // Parsear el primer vértice
+            std::istringstream v1Stream(v1);
+            v1Stream >> vIndex[0] >> slash >> tIndex[0] >> slash >> nIndex[0];
 
-        if (mesh->HasNormals()) {
-            vertices.push_back(mesh->mNormals[i].x);
-            vertices.push_back(mesh->mNormals[i].y);
-            vertices.push_back(mesh->mNormals[i].z);
-        } else{
-			vertices.push_back(0.0f);
-            vertices.push_back(0.0f);
-            vertices.push_back(0.0f);
-		}
+            // Parsear el segundo vértice
+            std::istringstream v2Stream(v2);
+            v2Stream >> vIndex[1] >> slash >> tIndex[1] >> slash >> nIndex[1];
 
-        if (mesh->mTextureCoords[0]) {
-            vertices.push_back(mesh->mTextureCoords[0][i].x);
-            vertices.push_back(mesh->mTextureCoords[0][i].y);
-        } else {
-            vertices.push_back(0.0f);
-            vertices.push_back(0.0f);
+            // Parsear el tercer vértice
+            std::istringstream v3Stream(v3);
+            v3Stream >> vIndex[2] >> slash >> tIndex[2] >> slash >> nIndex[2];
+
+            // Agregar los vértices y los índices
+            for (int i = 0; i < 3; i++) {
+
+				// std::cout << vIndex[i] << "/" << tIndex[i] << "/" << nIndex[i] << " ";
+                Vertex vertex;
+                vertex.position = temp_positions[vIndex[i]-1];
+                vertex.texCoords = temp_texCoords[tIndex[i]-1];
+                vertex.normal = temp_normals[nIndex[i]-1];
+                vertices.push_back(vertex);
+                indices.push_back(vertices.size() - 1);
+            }
+			
+            // Si hay un cuarto vértice, parsearlo y agregarlo
+            if (!v4.empty()) {
+                std::istringstream v4Stream(v4);
+                v4Stream >> vIndex[3] >> slash >> tIndex[3] >> slash >> nIndex[3];
+				// std::cout << vIndex[3] << "/" << tIndex[3] << "/" << nIndex[3];
+                Vertex vertex;
+                vertex.position = temp_positions[vIndex[3] - 1];
+                vertex.texCoords = temp_texCoords[tIndex[3] - 1];
+                vertex.normal = temp_normals[nIndex[3] - 1];
+                vertices.push_back(vertex);
+				indices.push_back(indices.at(indices.size()-3));
+				indices.push_back(indices.at(indices.size()-2));
+				indices.push_back(vertices.size() - 1);
+            }
+
+			// std::cout << std::endl;
         }
     }
 
-    for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-        aiFace face = mesh->mFaces[i];
-        for (unsigned int j = 0; j < face.mNumIndices; j++) {
-            indices_vec.push_back(face.mIndices[j]);
-        }
-    }
-
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-
-    glGenBuffers(1, &buffer);
-    glBindBuffer(GL_ARRAY_BUFFER, buffer);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-
-    // Defino 1er argumento (atributo 0) del vertex shader (siempre XYZ)
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-
-	// 2o argumento (atributo 1) del vertex shader (uv)
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-
-	// 3er argumento (atributo 2) del vertex shader (nx,ny,nz)
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);  // Asignados atributos, podemos desconectar BUFFER
-
-    glGenBuffers(1, &i_buffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i_buffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices_vec.size() * s_index, indices_vec.data(), GL_STATIC_DRAW);
-
-    glBindVertexArray(0);  // Cierre vertex array
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    obj.VAO = VAO;
-    obj.Ni = N_indices;
-    obj.Nv = N_vertices;
-    obj.Nt = N_caras;
-    obj.tipo_indice = tipo;
-
-    return obj;
+    file.close();
+    return true;
 }
 
+bool load_obj(const char* path, objeto& obj) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
 
+    if (!LoadObj(path, vertices, indices)) {
+        return false;
+    }
+
+    obj.Nv = vertices.size();
+    obj.Ni = indices.size();
+    obj.tipo_indice = GL_UNSIGNED_INT;
+
+	printf("Reading model from %s\n",path);
+	printf("%d vertex, %d triangles, %d index\n", obj.Nv, obj.Ni / 2, obj.Ni);
+	printf("%ld bytes per index, %ld per vertex\n", sizeof(unsigned int), sizeof(Vertex));
+
+    GLuint VBO, EBO;
+    glGenVertexArrays(1, &obj.VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(obj.VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    // Posición
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+    glEnableVertexAttribArray(0);
+
+    // Textura
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+    glEnableVertexAttribArray(1);
+
+    // Normal
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+
+    return true;
+}
 
 
 void transfer_mat4(const char* name, mat4 M)
