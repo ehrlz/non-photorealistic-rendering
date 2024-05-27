@@ -20,13 +20,8 @@ bool sombra = false;
 GLFWwindow* window;
 GLuint prog[6];
 
-objeto spider;
-GLuint textura_spider;
-objeto ball;
-objeto helmet;
-GLuint textura_helmet;
-objeto cat;
-GLuint textura_cat;
+objeto models[6];
+GLuint textures[4];
 
 char* vertex_prog;
 char* fragment_prog;
@@ -36,11 +31,11 @@ int model_flag = 0;
 void change_scene(int option);
 void change_model(int option);
 
-bool pixelArtActive = false;
+bool postrender_activated = false;
 int rotating = 1;
 
 // ----- SHADER PARAMS -----
-float az = 0.f, el = .75f; // Azimut, elevación
+float az = 0.f, el = .75f; // Azimut, elevation
 
 // phong and blinn
 vec4 light_coefs = vec4(.2f,.7f,.1f,1.f); // ilum coefs: 20% ambiental + 70% diffuse + 10% spec | spec aperture
@@ -53,15 +48,15 @@ float y_lightness = 1.f;
 float alpha = 0.f;
 float beta = 0.f;
 
-int render_texture = 1; // // Option (defecto: encendido)
+int render_texture = 1; // // Option (default: activated)
 vec3 model_color = vec3(1,1,1);
 
 void dibujar_indexado(objeto obj)
 {
-	// Activamos VAO asociado a obj y lo dibujamos con glDrawElements 
+	// Draws the object with the vao asociated
 	glBindVertexArray(obj.VAO);
-	glDrawElements(GL_TRIANGLES, obj.Ni, obj.tipo_indice, (void*)0);  // Dibujar (indexado)
-	glBindVertexArray(0);  //Desactivamos VAO activo.
+	glDrawElements(GL_TRIANGLES, obj.Ni, obj.tipo_indice, (void*)0);
+	glBindVertexArray(0);
 }
 
 
@@ -83,16 +78,21 @@ void init_scene()
     glfwGetFramebufferSize(window, &width, &height);
     glViewport(0, 0, width, height); 
     
-	spider = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
-	textura_spider = cargar_textura("../data/spider.jpg", GL_TEXTURE1, false);
+	models[0] = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
+	textures[0] = cargar_textura("../data/spider.jpg", GL_TEXTURE1, false); //GL_TEXTURE0 for postprocessing
 
-	ball = cargar_modelo_obj("../data/ball_fountain.obj");
+	models[1] = cargar_modelo("../data/halo.bix");
+	textures[1] = cargar_textura("../data/halo.jpg", GL_TEXTURE2, false);
 
-	helmet = cargar_modelo_obj("../data/helmet.obj");
-	textura_helmet = cargar_textura("../data/helmet.jpg", GL_TEXTURE2, true);
+	models[2] = cargar_modelo_obj("../data/helmet.obj");
+	textures[2] = cargar_textura("../data/helmet.jpg", GL_TEXTURE3, true);
 
-	cat = cargar_modelo_obj("../data/cat.obj");
-	textura_cat = cargar_textura("../data/cat.jpg", GL_TEXTURE3, true);
+	models[3] = cargar_modelo_obj("../data/cat.obj");
+	textures[3] = cargar_textura("../data/cat.jpg", GL_TEXTURE4, true);
+
+	models[4] = cargar_modelo_obj("../data/pokeball.obj");
+	models[5] = cargar_modelo_obj("../data/ball_fountain.obj");
+	
 
 	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //25º Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
 	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up
@@ -146,15 +146,14 @@ float last_t;
 // Actualizar escena: cambiar posici�n objetos, nuevos objetros, posici�n c�mara, luces, etc.
 void render_scene()
 {	
-	if(pixelArtActive){
-		// printf("SCENE WITH POSTRENDER\n");
+	if(postrender_activated){
 		render_to_texture();
 	}
 
 	glClearColor(0.1f,0.1f,0.1f,1.0f);  // Especifica color para el fondo (RGB+alfa)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);          // Aplica color asignado borrando el buffer
 
-	if(pixelArtActive){
+	if(postrender_activated){
 		glEnable(GL_DEPTH_TEST);
 	}
 
@@ -166,18 +165,19 @@ void render_scene()
 		t = last_t;
 	}
 	 	
-
-	///////// Aqui vendría nuestr código para actualizar escena  /////////	
+	///////// Modelation code  /////////
 	mat4 M, T, R, S;
 
 	if(model_flag == SPIDER){
 		R=rotate(t, vec3(0, 0, 1.f));  
 		T=translate(vec3(0.f, 0.f, 0.f));
 		M = T*R;
-	} else if(model_flag == BALL){
-		T=translate(vec3(0.f, 0.f, 0.5f));
-		S=scale(vec3(0.15f,0.15f,0.15f));
-		M = T * S;
+	}if(model_flag == HALO){
+		mat4 R2 = rotate(radians(90.f), vec3(1, 0, 0));
+		R=rotate(t, vec3(0, 1, 0));
+		T=translate(vec3(0.f, 0.f, 0.f));
+		S=scale(vec3(0.95f,0.95f,0.95f));
+		M = T * R2 * R * S;
 	}else if (model_flag == HELMET){
 		T=translate(vec3(0.f, 0.f, 0.5f));
 		R=rotate(t, vec3(0.f, 0.f, 1.f));
@@ -188,11 +188,24 @@ void render_scene()
 		R=rotate(t, vec3(0.f, 0.f, 1.f));
 		S=scale(vec3(0.05f,0.05f,0.05f));
 		M = T * R * S;
+	}else if (model_flag == BALL){
+		T=translate(vec3(0.f, 0.f, 0.f));
+		S=scale(vec3(0.01f,0.01f,0.01f));
+		M = T * S;
+	} else if(model_flag == FOUNTAIN_BALL){
+		T=translate(vec3(0.f, 0.f, 0.5f));
+		S=scale(vec3(0.15f,0.15f,0.15f));
+		M = T * S;
+	}else if (model_flag == BUDA){
+		T=translate(vec3(0.f, 0.f, 0.f));
+		R=rotate(t, vec3(1.f, 0.f, 0.f));
+		S=scale(vec3(1.f,1.f,1.f));
+		M = T * R * S;
 	}
 
 	if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN || scene_flag == GOOCH){
-		// Cálculo de la dirección de la luz
-		L = vec3(2*sqrt(2)*cos(az), 2*sqrt(2)*sin(az), 1) / 3.f; // normalizado
+		// Light calcs
+		L = vec3(2*sqrt(2)*cos(az), 2*sqrt(2)*sin(az), 1) / 3.f; // normalized
 		transfer_vec3("light", L);
 	}
 
@@ -200,35 +213,19 @@ void render_scene()
 	transfer_mat4("PV",PP*VV);
 	transfer_mat4("M", M);
 	
-	// DIBUJO DEL MODELO
-	switch (model_flag)
-	{
-		case SPIDER:
-		
-		dibujar_indexado(spider);
-		break;
-		case BALL:
-		dibujar_indexado(ball);
-		break;
-		case HELMET:
-		dibujar_indexado(helmet);
-		break;
-		case CAT:
-		dibujar_indexado(cat);
-		break;
-	}
+	// Model render
+	dibujar_indexado(models[model_flag]);
 
-	if(pixelArtActive){
+	if(postrender_activated){
 		post_process();
 	}
 }
 
-
+///////// Options transfer to shaders  /////////
 void apply_options()
 {	
-	// SHADER
+	// SHADERS
 	glUseProgram(prog[scene_flag]);
-
 
 	if(scene_flag == PIXEL){
 		transfer_vec3("rejilla", rejilla);
@@ -259,14 +256,23 @@ void apply_options()
 	case SPIDER:
 		transfer_int("unit",1);
 		break;
+	case HALO:
+		transfer_int("unit",2);
+		break;
+	case HELMET:
+		transfer_int("unit",3);
+		break;
+	case CAT:
+		transfer_int("unit",4);
+		break;
 	case BALL:
 		render_texture = 0; // ball doesn't have texture
 		break;
-	case HELMET:
-		transfer_int("unit",2);
+	case FOUNTAIN_BALL:
+		render_texture = 0; // ball doesn't have texture
 		break;
-	case CAT:
-		transfer_int("unit",3);
+	case BUDA:
+		render_texture = 0; // ball doesn't have texture
 		break;
 	}
 
@@ -277,12 +283,12 @@ void apply_options()
 		transfer_vec3("model_color", model_color); // selec color si no hay textura
 	}
 
-	if(model_flag == BALL)
+	if(model_flag == BALL || model_flag == FOUNTAIN_BALL || model_flag == BUDA)
 		render_texture = 1; // Render texture by default
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// PROGRAMA PRINCIPAL
+/// MAIN PROGRAM
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[])
 {
@@ -299,7 +305,7 @@ int main(int argc, char* argv[])
 	{
 		render_scene();
 
-		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border, &pixelArtActive,
+		renderImGui(&scene_flag, &model_flag, &render_texture, &color_levels, &toon_border, &postrender_activated,
 					&model_color, &b_lightness, &y_lightness, &alpha, &beta, &light_coefs,
 					&rejilla.x, &rejilla.y, &rejilla.z, &sombra);
 
@@ -391,10 +397,10 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_4: change_scene(BLINN); break;
 			case GLFW_KEY_B: change_scene(NONE); break;
 			case GLFW_KEY_0: 
-				if(pixelArtActive){
-					pixelArtActive=false;
+				if(postrender_activated){
+					postrender_activated=false;
 				}else{
-					pixelArtActive=true;
+					postrender_activated=true;
 				}
 				break;
 			

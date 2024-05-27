@@ -39,7 +39,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         ImGui::RadioButton("Texture Pixelation", scene_flag, PIXEL);
     }
 
-    if (*model_flag != SPIDER) // SPIDER DOESN'T HAVE NORMALS
+    if (*model_flag != SPIDER && *model_flag != HALO) // SPIDER & HALO DOESN'T HAVE NORMALS
     {
         ImGui::RadioButton("Toon", scene_flag, TOON);
         ImGui::SameLine();
@@ -51,15 +51,20 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     }
 
     ImGui::SeparatorText("Models");
+    // Textured models
     ImGui::RadioButton("Spiderman", model_flag, SPIDER);
+    ImGui::SameLine();
+    ImGui::RadioButton("Mister Chief", model_flag, HALO);
     ImGui::SameLine();
     ImGui::RadioButton("Helmet", model_flag, HELMET);
     ImGui::SameLine();
     ImGui::RadioButton("Cat", model_flag, CAT);
-    if (*scene_flag != PIXEL)
-    { // No texture models can't admit texture pixelation
-        ImGui::RadioButton("Fountain-Ball", model_flag, BALL);
+    // Plain models
+    if (*scene_flag != PIXEL) // No texture models can't admit texture pixelation
+    {
+        ImGui::RadioButton("Ball", model_flag, BALL);
         ImGui::SameLine();
+        ImGui::RadioButton("Fountain-Ball", model_flag, FOUNTAIN_BALL);
     }
     ImGui::End();
 
