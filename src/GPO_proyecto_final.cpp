@@ -322,7 +322,7 @@ int main(int argc, char* argv[])
 	}
 	
 	terminateImGui();
-	delete_second_render(); // TODO delete objetos
+	delete_postprocessing(); // TODO delete objetos
 	glfwTerminate();
 	exit(EXIT_SUCCESS);
 }
@@ -360,7 +360,7 @@ void ResizeCallback(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 	ALTO = height;	ANCHO = width;
 
-	second_render_reshape();
+	postprocessing_reshape();
 }
 
 // Callback de pulsacion de tecla

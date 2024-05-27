@@ -4,9 +4,9 @@ GLuint frame_buffer;
 GLuint tex_color_buffer;
 GLuint rbo_depth;
 
-GLuint prog_second_render;
-char *vertex_prog_second_render;
-char *fragment_prog_second_render;
+GLuint prog_postprocessing;
+char *vertex_prog_postprocessing;
+char *fragment_prog_postprocessing;
 
 GLuint rectVAO, rectVBO;
 
@@ -23,10 +23,10 @@ static const float fbo_vertices[] = {
 
 void compile_postprocessing_shaders()
 {
-    vertex_prog_second_render = leer_codigo_de_fichero("../data/shaders/pixelArt.vs");
-    fragment_prog_second_render = leer_codigo_de_fichero("../data/shaders/pixelArt.fs");
-    prog_second_render = Compile_Link_Shaders(vertex_prog_second_render, fragment_prog_second_render);
-    glUseProgram(prog_second_render);
+    vertex_prog_postprocessing = leer_codigo_de_fichero("../data/shaders/pixelArt.vs");
+    fragment_prog_postprocessing = leer_codigo_de_fichero("../data/shaders/pixelArt.fs");
+    prog_postprocessing = Compile_Link_Shaders(vertex_prog_postprocessing, fragment_prog_postprocessing);
+    glUseProgram(prog_postprocessing);
     transfer_int("bufferTexture", 0);
 }
 
@@ -110,7 +110,7 @@ void post_process()
     glClearColor(0.1f,0.1f,0.1f,1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glUseProgram(prog_second_render);
+    glUseProgram(prog_postprocessing);
     glActiveTexture(GL_TEXTURE0);
 
     transfer_int("bufferTexture", 0);
@@ -126,23 +126,23 @@ void post_process()
 }
 
 // En caso de cambio de tamaño de la ventana
-void second_render_reshape()
+void postprocessing_reshape()
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ALTO, ANCHO, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, ANCHO, ALTO, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ALTO, ANCHO);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, ANCHO, ALTO);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
-void delete_second_render(void)
+void delete_postprocessing(void)
 {
     glDeleteBuffers(1, &rectVBO);
     glDeleteRenderbuffers(1, &rbo_depth);
     glDeleteTextures(1, &tex_color_buffer);
     glDeleteFramebuffers(1, &frame_buffer);
-    glDeleteProgram(prog_second_render);
+    glDeleteProgram(prog_postprocessing);
 }
