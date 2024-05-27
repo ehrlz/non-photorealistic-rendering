@@ -52,12 +52,15 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 
     ImGui::SeparatorText("Models");
     // Textured models
-        // Without normal mapping
-    ImGui::RadioButton("Spiderman", model_flag, SPIDER);
-    ImGui::SameLine();
-    ImGui::RadioButton("Mister Chief", model_flag, HALO);
+    // Without normal mapping
+    if (*scene_flag != TOON && *scene_flag != PHONG && *scene_flag != BLINN && *scene_flag != GOOCH) // No normal mapping for these shaders
+    {
+        ImGui::RadioButton("Spiderman", model_flag, SPIDER);
+        ImGui::SameLine();
+        ImGui::RadioButton("Mister Chief", model_flag, HALO);
+    }
 
-        // With normal mapping
+    // With normal mapping
     ImGui::RadioButton("Helmet", model_flag, HELMET);
     ImGui::SameLine();
     ImGui::RadioButton("Cat", model_flag, CAT);
@@ -77,7 +80,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 
     // Second window: Shader and texture options
     ImGui::Begin("Scene options", NULL, window_flags);
-    if (*render_texture == 0)
+    if (*render_texture == 0 || (*model_flag == JEEP || *model_flag == FOUNTAIN_BALL || *model_flag == SUZANNE))
     { // color only can be defined with no texture
         float col[3] = {model_color->x, model_color->y, model_color->z};
         ImGui::ColorPicker3("Model color", col, ImGuiColorEditFlags_PickerHueWheel | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoAlpha);
@@ -86,7 +89,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         model_color->y = col[1];
         model_color->z = col[2];
     }
-    if (*model_flag != JEEP || *model_flag != FOUNTAIN_BALL || *model_flag != SUZANNE) // This models don't have texture
+    if (*model_flag != JEEP && *model_flag != FOUNTAIN_BALL && *model_flag != SUZANNE) // This models don't have texture
     {
         ImGui::Checkbox("Render textures", (bool *)render_texture);
     }
@@ -149,7 +152,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     ImGui::Begin("Info", NULL, window_flags);
     if (*scene_flag == TOON || *scene_flag == PHONG || *scene_flag == BLINN || *scene_flag == GOOCH)
         ImGui::Text("<- and -> to change light direction");
-    if (*model_flag == HELMET || *model_flag == CAT)
+    if (*model_flag == HELMET || *model_flag == CAT || *model_flag == JEEP || *model_flag == SUZANNE)
         ImGui::Text("<space> to switch rotation");
     ImGui::Text("https://github.com/ehrlz/non-photorealistic-rendering.git");
     ImGui::End();

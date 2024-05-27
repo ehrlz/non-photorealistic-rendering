@@ -272,25 +272,23 @@ void apply_options()
 		transfer_int("unit",4);
 		break;
 	case JEEP:
-		render_texture = 0; // ball doesn't have texture
 		break;
 	case FOUNTAIN_BALL:
-		render_texture = 0; // ball doesn't have texture
 		break;
 	case SUZANNE:
-		render_texture = 0; // ball doesn't have texture
 		break;
 	}
 
 	// Texture Options
 	if(scene_flag != PIXEL) // Needs a texture to pixelate
-	{
-		transfer_int("render_texture", render_texture);
+	{	
+		if(model_flag != JEEP && model_flag != FOUNTAIN_BALL && model_flag != SUZANNE)
+			transfer_int("render_texture", render_texture);
+		else
+			transfer_int("render_texture", 0);
+		
 		transfer_vec3("model_color", model_color); // selec color si no hay textura
 	}
-
-	if(model_flag == JEEP || model_flag == FOUNTAIN_BALL || model_flag == SUZANNE)
-		render_texture = 1; // Render texture by default
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
