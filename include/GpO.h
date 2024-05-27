@@ -55,7 +55,7 @@ char* leer_codigo_de_fichero(const char*);
 
 
 GLuint cargar_cube_map(const char *, GLuint);
-GLuint cargar_textura(const char *,GLuint, bool);
+GLuint cargar_textura(const char *,GLuint);
 objeto cargar_modelo(char*);
 objeto cargar_modelo_obj(const char*);
 
@@ -112,3 +112,5 @@ void terminateImGui(void);
 // CONTENT
 enum SCENES {NONE, PIXEL, TOON, PHONG, BLINN, GOOCH};
 enum MODELS {SPIDER, HALO, HELMET, CAT, BALL, FOUNTAIN_BALL, BUDA};
+
+bool load_obj(const char* path, objeto& obj);

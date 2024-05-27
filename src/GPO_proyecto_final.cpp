@@ -79,20 +79,21 @@ void init_scene()
     glViewport(0, 0, width, height); 
     
 	models[0] = cargar_modelo("../data/spider.bix");  // Preparar datos de objeto, mandar a GPU
-	textures[0] = cargar_textura("../data/spider.jpg", GL_TEXTURE1, false); //GL_TEXTURE0 for postprocessing
+	textures[0] = cargar_textura("../data/spider.jpg", GL_TEXTURE1); //GL_TEXTURE0 for postprocessing
 
 	models[1] = cargar_modelo("../data/halo.bix");
-	textures[1] = cargar_textura("../data/halo.jpg", GL_TEXTURE2, false);
+	textures[1] = cargar_textura("../data/halo.jpg", GL_TEXTURE2);
 
-	models[2] = cargar_modelo_obj("../data/helmet.obj");
-	textures[2] = cargar_textura("../data/helmet.jpg", GL_TEXTURE3, true);
+	load_obj("../data/helmet.obj", models[2]);
+	textures[2] = cargar_textura("../data/helmet.jpg", GL_TEXTURE3);
 
-	models[3] = cargar_modelo_obj("../data/cat.obj");
-	textures[3] = cargar_textura("../data/cat.jpg", GL_TEXTURE4, true);
+	load_obj("../data/cat.obj", models[3]);
+	textures[3] = cargar_textura("../data/cat.jpg", GL_TEXTURE4);
 
-	models[4] = cargar_modelo_obj("../data/pokeball.obj");
-	models[5] = cargar_modelo_obj("../data/ball_fountain.obj");
-	
+	load_obj("../data/pokeball.obj", models[4]);
+	load_obj("../data/ball_fountain.obj", models[5]);
+
+	// exit(EXIT_SUCCESS);
 
 	PP = perspective(glm::radians(25.0f), 4.0f / 3.0f, 0.1f, 20.0f);  //25º Y-FOV,  4:3 ,  Znear=0.1, Zfar=20
 	VV = lookAt(pos_obs, target, up);  // Pos camara, Lookat, head up

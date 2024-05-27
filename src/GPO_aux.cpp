@@ -14,6 +14,11 @@
 #include <assimp/postprocess.h>
 #include <iostream>
 
+// Custom reader
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
 ////////////////////   
 
 extern int ANCHO, ALTO;
@@ -183,9 +188,9 @@ GLuint Compile_Link_Shaders(const char* vertexShader_source,const char*fragmentS
 //////////////////  AUXILIARES 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GLuint cargar_textura(const char * imagepath, GLuint tex_unit, bool obj)
+GLuint cargar_textura(const char * imagepath, GLuint tex_unit)
 {
-  stbi_set_flip_vertically_on_load(!obj);
+  stbi_set_flip_vertically_on_load(true);
 
   int width, height,nrChannels;
   unsigned char* data = stbi_load(imagepath, &width, &height,&nrChannels,0);
@@ -420,6 +425,7 @@ objeto cargar_modelo(char* fichero)
 
 }
 
+// ASSIMP
 objeto cargar_modelo_obj(const char* fichero) {
     objeto obj;
     GLuint VAO;
@@ -537,7 +543,143 @@ objeto cargar_modelo_obj(const char* fichero) {
     return obj;
 }
 
+struct Vertex {
+    glm::vec3 position;
+    glm::vec2 texCoords;
+    glm::vec3 normal;
+};
 
+bool LoadObj(const std::string& path, std::vector<Vertex>& vertices, std::vector<unsigned int>& indices) {
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        std::cerr << "Error: Could not open file " << path << std::endl;
+        return false;
+    }
+
+    std::vector<glm::vec3> temp_positions;
+    std::vector<glm::vec2> temp_texCoords;
+    std::vector<glm::vec3> temp_normals;
+
+	float extra_texCoord;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream s(line);
+        std::string type;
+        s >> type;
+
+        if (type == "v") {
+            glm::vec3 position;
+            s >> position.x >> position.y >> position.z;
+			std::cout << "Position: "<< position.x << " " << position.y << " " << position.z << std::endl;
+            temp_positions.push_back(position);
+        } else if (type == "vt") {
+            glm::vec2 texCoord;
+			if(!(s >> texCoord.x >> texCoord.y >> extra_texCoord)){
+				s >> texCoord.x >> texCoord.y;
+			}
+			// std::cout << "UV: " << texCoord.x << " " << texCoord.y << std::endl;
+            temp_texCoords.push_back(texCoord);
+        } else if (type == "vn") {
+            glm::vec3 normal;
+            s >> normal.x >> normal.y >> normal.z;
+			// std::cout << "Normal: "<< normal.x << " " <<  normal.y << " " << normal.z << std::endl;
+            temp_normals.push_back(normal);
+        } else if (type == "f") {
+            std::string v1, v2, v3, v4;
+            unsigned int vIndex[4], tIndex[4], nIndex[4];
+            char slash;
+
+			s >> v1 >> v2 >> v3 >> v4;
+
+            // Parsear el primer vértice
+            std::istringstream v1Stream(v1);
+            v1Stream >> vIndex[0] >> slash >> tIndex[0] >> slash >> nIndex[0];
+
+            // Parsear el segundo vértice
+            std::istringstream v2Stream(v2);
+            v2Stream >> vIndex[1] >> slash >> tIndex[1] >> slash >> nIndex[1];
+
+            // Parsear el tercer vértice
+            std::istringstream v3Stream(v3);
+            v3Stream >> vIndex[2] >> slash >> tIndex[2] >> slash >> nIndex[2];
+
+            // Agregar los vértices y los índices
+            for (int i = 0; i < 3; i++) {
+
+				// std::cout << vIndex[i] << "/" << tIndex[i] << "/" << nIndex[i] << " ";
+                Vertex vertex;
+                vertex.position = temp_positions[vIndex[i]-1];
+                vertex.texCoords = temp_texCoords[tIndex[i]-1];
+                vertex.normal = temp_normals[nIndex[i]-1];
+                vertices.push_back(vertex);
+                indices.push_back(vertices.size() - 1);
+            }
+			
+            // Si hay un cuarto vértice, parsearlo y agregarlo
+            if (!v4.empty()) {
+                std::istringstream v4Stream(v4);
+                v4Stream >> vIndex[3] >> slash >> tIndex[3] >> slash >> nIndex[3];
+				// std::cout << vIndex[3] << "/" << tIndex[3] << "/" << nIndex[3];
+                Vertex vertex;
+                vertex.position = temp_positions[vIndex[3] - 1];
+                vertex.texCoords = temp_texCoords[tIndex[3] - 1];
+                vertex.normal = temp_normals[nIndex[3] - 1];
+                vertices.push_back(vertex);
+				indices.push_back(indices.at(indices.size()-3));
+				indices.push_back(indices.at(indices.size()-2));
+				indices.push_back(vertices.size() - 1);
+            }
+
+			// std::cout << std::endl;
+        }
+    }
+
+    file.close();
+    return true;
+}
+
+bool load_obj(const char* path, objeto& obj) {
+    std::vector<Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    if (!LoadObj(path, vertices, indices)) {
+        return false;
+    }
+
+    obj.Nv = vertices.size();
+    obj.Ni = indices.size();
+    obj.tipo_indice = GL_UNSIGNED_INT;
+
+    GLuint VBO, EBO;
+    glGenVertexArrays(1, &obj.VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    glBindVertexArray(obj.VAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    // Posición
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, position));
+    glEnableVertexAttribArray(0);
+
+    // Textura
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+    glEnableVertexAttribArray(1);
+
+    // Normal
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+    glEnableVertexAttribArray(2);
+
+    glBindVertexArray(0);
+
+    return true;
+}
 
 
 void transfer_mat4(const char* name, mat4 M)
