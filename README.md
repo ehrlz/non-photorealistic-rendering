@@ -32,7 +32,7 @@ make -j4
 > Ubuntu 20.04 CMake 3.2 version: `sudo snap install cmake --classic`
 
 > [!WARNING]
-> `--recurse-submodules` flag is needed for `imgui` external 
+> `--recurse-submodules` flag is needed for `imgui` external library
 
 
 ## Shaders
@@ -55,6 +55,10 @@ Combination of an ilumination shader (blinn in this case), color discretization 
 ### Pixel shading
 
 Postprocessing effect that discretizates the render in pixels with customizable size.
+
+### Pixel texture rendering
+
+Shader that pixelates the texture that is applied to a model.
 
 ## Credits
 This software uses [imgui](https://github.com/ocornut/imgui) to handle user interactions with the scenes params.

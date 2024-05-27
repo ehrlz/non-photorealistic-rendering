@@ -57,7 +57,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     {
         ImGui::RadioButton("Spiderman", model_flag, SPIDER);
         ImGui::SameLine();
-        ImGui::RadioButton("Mister Chief", model_flag, HALO);
+        ImGui::RadioButton("Master Chief", model_flag, HALO);
     }
 
     // With normal mapping
