@@ -32,7 +32,7 @@ void change_scene(int option);
 void change_model(int option);
 
 bool postrender_activated = false;
-int rotating = 1;
+bool rotating = true;
 
 // ----- SHADER PARAMS -----
 float az = 0.f, el = .75f; // Azimut, elevation
@@ -106,7 +106,7 @@ void init_scene()
 	prog[0] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
 	// PIXEL 2
-	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel2.fs");
+	fragment_prog = leer_codigo_de_fichero("../data/shaders/pixel.fs");
 	prog[1] = Compile_Link_Shaders(vertex_prog, fragment_prog);
 
 	// TOON SHADING
@@ -132,7 +132,8 @@ void init_scene()
 	compile_postprocessing_shaders();
 
 	posRejilla=glGetUniformLocation(prog[0], "rejilla");
-	change_scene(NONE);	// Indicamos que programa vamos a usar 
+
+	glUseProgram(prog[NONE]); // Indicamos que programa vamos a usar 
 
 	glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
@@ -373,137 +374,22 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 
 	if(action!=GLFW_RELEASE){
 		switch(key){
-			case GLFW_KEY_UP: rejilla.y+=0.1; break; // Aumento de longitud pixeles en y
-			case GLFW_KEY_DOWN: rejilla.y-=0.1; break; // Disminucion de longitud pixeles en y
 			case GLFW_KEY_LEFT: 
 				if(scene_flag != NONE && scene_flag != PIXEL){
 					az -= LIGHT_MOVE_SCALE;
-				}else{ // Disminucion de longitud pixeles en x
-					rejilla.x-=0.1;
 				}
 				break;
 			case GLFW_KEY_RIGHT:
 				if(scene_flag != NONE && scene_flag != PIXEL){
 					az += LIGHT_MOVE_SCALE;
-				}else{ // Aumento de longitud pixeles en x
-					rejilla.x+=0.1;
 				}
-				break;
-
-			// Cambio de tamaño del sombreado
-			case GLFW_KEY_KP_ADD: rejilla.z+=0.1; break;
-			case GLFW_KEY_KP_SUBTRACT: rejilla.z-=0.1; break;
-
-			// Cambio de shader
-			case GLFW_KEY_1: change_scene(PIXEL); break;
-			case GLFW_KEY_2: change_scene(TOON); break;
-			case GLFW_KEY_3: change_scene(PHONG); break;
-			case GLFW_KEY_4: change_scene(BLINN); break;
-			case GLFW_KEY_B: change_scene(NONE); break;
-			case GLFW_KEY_0: 
-				if(postrender_activated){
-					postrender_activated=false;
-				}else{
-					postrender_activated=true;
-				}
-				break;
-			
-			//Intercambio de sombreado
-			case GLFW_KEY_TAB:
-				{
-					float aux=z; z=rejilla.z; rejilla.z=aux; // in a block to avoid cross initialization
-				}
-				break;
-			case GLFW_KEY_PERIOD:
-				change_model((model_flag+1) % 4);
-				break;
-			case GLFW_KEY_COMMA:
-				--model_flag;
-				if(model_flag < 0)
-					model_flag = 0;
-				change_model(model_flag-1);
-				break;
-
-			case GLFW_KEY_T:
-				// BALL_FOUNTAIN DOESN'T HAVE TEXTURE
-				// TODO: IMPLEMENT SWITCH PIXEL SHADER
-				if(model_flag == JEEP || scene_flag == NONE || scene_flag == PIXEL)
-					break;
-				render_texture = ++render_texture % 2; 
-				printf("RENDER STATUS: %d\n", render_texture);
-				transfer_int("render_texture",render_texture);
 				break;
 			case GLFW_KEY_SPACE:
-				rotating = ++rotating % 2;
+				rotating = !rotating;
 				if(rotating) glfwSetTime((double)last_t); // set the time to the stop instant to continue
 				break;
 		}
 	}
-}
-
-void change_scene(int option){
-	if(option < 0 || option > 4){ // UPDATE IF A NEW SHADER IS IMPLEMENTED
-		fprintf(stderr,"Scene not available\n");
-		return;
-	} 
-	scene_flag = option;
-	
-	switch (option)
-	{
-	case 0:
-		printf("Base shading\n");
-		change_model(SPIDER);
-		break;
-	case 1:
-		printf("Pixel shading 2\n");
-		change_model(SPIDER);
-		break;
-	case 2:
-		printf("Toon shading\n");
-		change_model(model_flag);
-		break;
-	case 3:
-		printf("Phong shading\n");
-		change_model(model_flag);
-		break;
-	case 4:
-		printf("Blinn-phong shading\n");
-		change_model(model_flag);
-		break;
-	}
-	glUseProgram(prog[option]);
-}
-
-
-// SPIDER -> PIXEL, esfera & HELMET -> TOON
-void change_model(int option){
-	if(option < 0 || option > 3){ // UPDATE IF A NEW MODEL IS IMPLEMENTED
-		fprintf(stderr,"Model not available\n");
-		return;
-	}
-	
-	switch (option)
-	{
-	case 0:
-		printf("SPIDER\n");
-		break;
-	case 1:
-		printf("BALL\n");
-		break;
-	case 2:
-		if (scene_flag == TOON){
-			transfer_int("unit",1);
-		}
-		printf("HELMET\n");
-		break;
-	case 3:
-		if (scene_flag == TOON){
-			transfer_int("unit",2);
-		}
-		printf("CAT\n");
-		break;
-	}
-	model_flag = option;
 }
 
 void asigna_funciones_callback(GLFWwindow* window)

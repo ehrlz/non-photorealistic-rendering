@@ -57,9 +57,13 @@ To run this application you'll need [Git](https://git-scm.com) and CMake (>=3.20
 git clone --recurse-submodules git@github.com:ehrlz/non-photorealistic-rendering.git
 
 # Go into the repo
-cd non-photorealistic-rendering/build
+cd non-photorealistic-rendering
 
-# Compile the project
+# Create the build folder
+mkdir build
+
+# Go inside and compile the project
+cd build
 cmake .. -DOpenGL_GL_PREFERENCE=GLVND
 make -j4
 
