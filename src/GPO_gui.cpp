@@ -34,7 +34,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
     ImGui::Begin("Scenes", NULL, window_flags);
     ImGui::SeparatorText("Shaders");
     ImGui::RadioButton("None", scene_flag, NONE);
-    if (*model_flag != BALL)
+    if (*model_flag != JEEP && *model_flag != FOUNTAIN_BALL && *model_flag != SUZANNE)
     {
         ImGui::RadioButton("Texture Pixelation", scene_flag, PIXEL);
     }
@@ -52,19 +52,23 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
 
     ImGui::SeparatorText("Models");
     // Textured models
+        // Without normal mapping
     ImGui::RadioButton("Spiderman", model_flag, SPIDER);
     ImGui::SameLine();
     ImGui::RadioButton("Mister Chief", model_flag, HALO);
-    ImGui::SameLine();
+
+        // With normal mapping
     ImGui::RadioButton("Helmet", model_flag, HELMET);
     ImGui::SameLine();
     ImGui::RadioButton("Cat", model_flag, CAT);
     // Plain models
     if (*scene_flag != PIXEL) // No texture models can't admit texture pixelation
     {
-        ImGui::RadioButton("Ball", model_flag, BALL);
+        ImGui::RadioButton("Jeep", model_flag, JEEP);
         ImGui::SameLine();
         ImGui::RadioButton("Fountain-Ball", model_flag, FOUNTAIN_BALL);
+        ImGui::SameLine();
+        ImGui::RadioButton("Suzanne", model_flag, SUZANNE);
     }
     ImGui::End();
 
@@ -82,7 +86,7 @@ void renderImGui(int *scene_flag, int *model_flag, int *render_texture, int *col
         model_color->y = col[1];
         model_color->z = col[2];
     }
-    if (*model_flag != BALL) // This models don't have texture
+    if (*model_flag != JEEP || *model_flag != FOUNTAIN_BALL || *model_flag != SUZANNE) // This models don't have texture
     {
         ImGui::Checkbox("Render textures", (bool *)render_texture);
     }

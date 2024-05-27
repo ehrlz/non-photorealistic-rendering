@@ -20,7 +20,7 @@ bool sombra = false;
 GLFWwindow* window;
 GLuint prog[6];
 
-objeto models[6];
+objeto models[7];
 GLuint textures[4];
 
 char* vertex_prog;
@@ -90,8 +90,9 @@ void init_scene()
 	load_obj("../data/cat.obj", models[3]);
 	textures[3] = cargar_textura("../data/cat.jpg", GL_TEXTURE4);
 
-	load_obj("../data/pokeball.obj", models[4]);
+	load_obj("../data/jeep.obj", models[4]);
 	load_obj("../data/ball_fountain.obj", models[5]);
+	load_obj("../data/suzanne.obj", models[6]);
 
 	// exit(EXIT_SUCCESS);
 
@@ -180,29 +181,33 @@ void render_scene()
 		S=scale(vec3(0.95f,0.95f,0.95f));
 		M = T * R2 * R * S;
 	}else if (model_flag == HELMET){
-		T=translate(vec3(0.f, 0.f, 0.5f));
+		T=translate(vec3(0.f, 0.f, 0.8f));
 		R=rotate(t, vec3(0.f, 0.f, 1.f));
-		S=scale(vec3(0.1f,0.1f,0.1f));
+		S=scale(vec3(0.06f,0.06f,0.06f));
 		M = T * R * S;
 	}else if (model_flag == CAT){
 		T=translate(vec3(0.f, 0.f, 0.f));
 		R=rotate(t, vec3(0.f, 0.f, 1.f));
 		S=scale(vec3(0.05f,0.05f,0.05f));
 		M = T * R * S;
-	}else if (model_flag == BALL){
-		T=translate(vec3(0.f, 0.f, 0.f));
-		S=scale(vec3(0.01f,0.01f,0.01f));
-		M = T * S;
+	}else if (model_flag == JEEP){
+		T=translate(vec3(0.f, 0.f, 0.5f));
+		mat4 R2 = rotate(radians(90.f), vec3(1.f, 0.f, 0.f));
+		R=rotate(t, vec3(0.f, 1.f, 0.f));
+		S=scale(vec3(0.5f, 0.5f, 0.5f));
+		M = T * R2 * R * S;
 	} else if(model_flag == FOUNTAIN_BALL){
 		T=translate(vec3(0.f, 0.f, 0.5f));
 		S=scale(vec3(0.15f,0.15f,0.15f));
 		M = T * S;
-	}else if (model_flag == BUDA){
-		T=translate(vec3(0.f, 0.f, 0.f));
-		R=rotate(t, vec3(1.f, 0.f, 0.f));
-		S=scale(vec3(1.f,1.f,1.f));
-		M = T * R * S;
-	}
+	}else if (model_flag == SUZANNE){
+		T=translate(vec3(0.f, 0.f, 1.f));
+		mat4 R2 = rotate(radians(90.f), vec3(1.f, 0.f, 0.f));
+		R=rotate(t, vec3(0.f, 1.f, 0.f));
+		S=scale(vec3(0.7f, 0.7f, 0.7f));
+		M = T * R2 * R * S;
+	} 
+	
 
 	if(scene_flag == TOON || scene_flag == PHONG || scene_flag == BLINN || scene_flag == GOOCH){
 		// Light calcs
@@ -266,13 +271,13 @@ void apply_options()
 	case CAT:
 		transfer_int("unit",4);
 		break;
-	case BALL:
+	case JEEP:
 		render_texture = 0; // ball doesn't have texture
 		break;
 	case FOUNTAIN_BALL:
 		render_texture = 0; // ball doesn't have texture
 		break;
-	case BUDA:
+	case SUZANNE:
 		render_texture = 0; // ball doesn't have texture
 		break;
 	}
@@ -284,7 +289,7 @@ void apply_options()
 		transfer_vec3("model_color", model_color); // selec color si no hay textura
 	}
 
-	if(model_flag == BALL || model_flag == FOUNTAIN_BALL || model_flag == BUDA)
+	if(model_flag == JEEP || model_flag == FOUNTAIN_BALL || model_flag == SUZANNE)
 		render_texture = 1; // Render texture by default
 }
 
@@ -424,7 +429,7 @@ static void KeyCallback(GLFWwindow* window, int key, int code, int action, int m
 			case GLFW_KEY_T:
 				// BALL_FOUNTAIN DOESN'T HAVE TEXTURE
 				// TODO: IMPLEMENT SWITCH PIXEL SHADER
-				if(model_flag == BALL || scene_flag == NONE || scene_flag == PIXEL)
+				if(model_flag == JEEP || scene_flag == NONE || scene_flag == PIXEL)
 					break;
 				render_texture = ++render_texture % 2; 
 				printf("RENDER STATUS: %d\n", render_texture);

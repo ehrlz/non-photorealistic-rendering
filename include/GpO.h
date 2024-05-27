@@ -111,6 +111,6 @@ void terminateImGui(void);
 
 // CONTENT
 enum SCENES {NONE, PIXEL, TOON, PHONG, BLINN, GOOCH};
-enum MODELS {SPIDER, HALO, HELMET, CAT, BALL, FOUNTAIN_BALL, BUDA};
+enum MODELS {SPIDER, HALO, HELMET, CAT, JEEP, FOUNTAIN_BALL, SUZANNE};
 
 bool load_obj(const char* path, objeto& obj);
