@@ -35,8 +35,8 @@ set(GLFW_BUILD_DOCS     OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(GLFW_INSTALL        OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_X11     ON  CACHE BOOL "" FORCE)
+set(GLFW_BUILD_WAYLAND  ON  CACHE BOOL "" FORCE)
+set(GLFW_BUILD_X11      ON CACHE BOOL "" FORCE)
 
 # GLM
 FetchContent_Declare(
@@ -46,7 +46,7 @@ FetchContent_Declare(
     GIT_SHALLOW    TRUE
 )
 
-# GLAD  (generador web — usamos el repo de Dav1dde que incluye el loader)
+# GLAD
 FetchContent_Declare(
     glad
     GIT_REPOSITORY https://github.com/Dav1dde/glad.git
@@ -84,6 +84,8 @@ target_include_directories(imgui_lib PUBLIC
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
 )
+
+target_link_libraries(imgui_lib PUBLIC glfw OpenGL::GL)
 
 # main bin
 add_executable(gpo_proyecto_final

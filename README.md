@@ -51,31 +51,39 @@ The goal is to provide a tool to experiment with a collection of npr algorithms 
 
 ## How to use
 
-To run this application you'll need [Git](https://git-scm.com) and CMake (>=3.20):
+### Requirements
+
+- CMake >= 3.20
+- Git
+- OpenGL libs: `sudo dnf install mesa-libGL-devel mesa-libGLU-devel`
+- X11 develop. tools: `sudo dnf install libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel`
+- Wayland develop. tools: `sudo dnf install wayland-devel libxkbcommon-devel`
+
+> (Fedora44 packages)
+
+> [!WARNING]
+> Only X11 or Wayland is requested. Turn off the option you prefer in CMakeFiles.txt. e.g. `set(GLFW_BUILD_WAYLAND OFF...)` 
+
 ```bash
 # Clone this repo
-git clone --recurse-submodules git@github.com:ehrlz/non-photorealistic-rendering.git
+git clone git@github.com:ehrlz/non-photorealistic-rendering.git
+```
 
+```
 # Go into the repo
 cd non-photorealistic-rendering
+```
+```
+# Build it
+cmake -B build -DCMAKE_POLICY_VERSION_MINIMUM=3.5 && cmake --build build
+```
 
-# Create the build folder
-mkdir build
-
-# Go inside and compile the project
-cd build
-cmake .. -DOpenGL_GL_PREFERENCE=GLVND
-make -j4
-
-# Run the app
+```
+# Run the app (in `/build` folder)
 ./bin/gpo_proyecto_final
 ```
 > [!TIP]
 > Ubuntu 20.04 CMake 3.2 version: `sudo snap install cmake --classic`
-
-> [!WARNING]
-> `--recurse-submodules` flag is needed for `imgui` external library
-
 
 ## Shaders
 ### Phong
